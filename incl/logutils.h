@@ -7,11 +7,7 @@ typedef enum
     DEBUG=5 
 } LogLevel;
 
-typedef struct node
-{
-    char time[26];
-    char message[4048];
-    struct node* next;
-} logNode;
+static void pushLog(char* cpTime, char* cpMessage);
 
-extern void log(LogLevel logLevel, char* cpMessage);
+extern void logIt(LogLevel logLevel, char* cpMessage);
+

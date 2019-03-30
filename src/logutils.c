@@ -7,9 +7,45 @@
 #include <time.h>
 #include <logutils.h>
 
-static logNode* logList = NULL;
 static FILE* fpLogFile = NULL;
 static LogLevel CURRENT_LOG_LEVEL = DEBUG;
+
+typedef struct node
+{
+    char time[26];
+    char message[4048];
+    struct node* next;
+} logNode;
+static logNode* logList = NULL;
+
+/**
+ * @brief store a log message
+ * @param cpMessage ... log message
+ */
+static void pushLog(char* cpTime, char* cpMessage)
+{
+    logNode* newNode = (logNode*) malloc(sizeof(logNode));
+    memset(newNode->message, 0, sizeof(newNode->message));
+    memset(newNode->time, 0, sizeof(newNode->time));
+    snprintf(newNode->time, sizeof(newNode->time)-1, cpTime);
+    snprintf(newNode->message, sizeof(newNode->message)-1, cpMessage);
+    newNode->next = logList;
+    logList = newNode;
+}
+
+/**
+ * @brief print log list
+ * @author chifac08
+ */
+static void printList()
+{
+    while(logList != NULL)
+    {
+        printf(logList->time);
+        printf(logList->message);
+        logList=logList->next;
+    }
+}
 
 /**
  * @brief 
@@ -29,7 +65,7 @@ void initLogging(LogLevel logLevel, char* cpLogFile)
  * @brief log message to log file
  * @param cpMessage
  */
-void log(LogLevel logLevel, char* cpMessage)
+void logIt(LogLevel logLevel, char* cpMessage)
 {
     char szLogMessage[4048] = {0};
     char szTime[26] = {0};
@@ -43,37 +79,7 @@ void log(LogLevel logLevel, char* cpMessage)
         timeinfo = localtime(&now);
         //TODO parse loglevel
         strftime(szTime, sizeof(szTime), "%Y-%m-%d %H:%M:%S", timeinfo);
-        push(szTime, cpMessage);
+        pushLog(szTime, cpMessage);
         printList();
-    }
-}
-
-/**
- * @brief store a log message
- * @param cpMessage ... log message
- */
-void push(char* cpTime, char* cpMessage)
-{
-    logNode* newNode = (logNode*) malloc(sizeof(logNode));
-    memset(newNode->message, 0, sizeof(newNode->message));
-    memset(newNode->time, 0, sizeof(newNode->time));
-    snprintf(newNode->time, sizeof(newNode->time)-1, cpTime);
-    snprintf(newNode->message, sizeof(newNode->message)-1, cpMessage);
-    newNode->next = logList;
-    logList = newNode;
-    return newNode;
-}
-
-/**
- * @brief print log list
- * @author chifac08
- */
-void printList()
-{
-    while(logList != NULL)
-    {
-        printf(logList->time);
-        printf(logList->message);
-        logList=logList->next;
     }
 }

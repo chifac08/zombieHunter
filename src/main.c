@@ -16,9 +16,9 @@ int main(int argc, char **argv)
     int* processList = NULL;
     
     initLogging(INFO, LOG_FILE);
-    
-    log(DEBUG, "Test");
-    
+    logIt(DEBUG, "Test");
+
+
     while(1)
     {
         /*
