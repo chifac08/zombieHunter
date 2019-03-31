@@ -12,11 +12,15 @@
 
 int main(int argc, char **argv)
 {
-    setvbuf (stdout, NULL, _IONBF, 0);
+	//TODO: ifdef DEBUG
+	setvbuf(stdout, NULL, _IONBF, 0);
     int* processList = NULL;
     
     initLogging(INFO, LOG_FILE);
     logIt(DEBUG, "Test");
+    logIt(DEBUG, "Test2");
+    logIt(DEBUG, "Test3");
+    test();
 
 
     while(1)
@@ -31,5 +35,8 @@ int main(int argc, char **argv)
          */
         sleep(10);
     }
+
+    destroyLogging();
+
 	return 0;
 }

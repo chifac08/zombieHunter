@@ -15,10 +15,10 @@ LDFLAGS= -Llib
 
 all: $(EXE)
 $(EXE): $(OBJ)
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CC) $(LDFLAGS) $^ -g -O0 -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -g -O0 -c $< -o $@
 
 clean:
 	$(RM) $(OBJ)
