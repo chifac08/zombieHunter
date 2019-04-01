@@ -8,7 +8,7 @@
 #include <logutils.h>
 
 #define CONFIG_FILE "/etc/opt/zombieHunter/service/hunter.conf"
-#define LOG_FILE "/home/flichten/test.log"
+#define LOG_FILE "/tmp/test.log"
 
 int main(int argc, char **argv)
 {
