@@ -16,11 +16,20 @@ int main(int argc, char **argv)
 	setvbuf(stdout, NULL, _IONBF, 0);
     int* processList = NULL;
     
-    initLogging(INFO, LOG_FILE);
-    logIt(DEBUG, "Test");
-    logIt(DEBUG, "Test2");
-    logIt(DEBUG, "Test3");
-    test();
+    initLogging(DEBUG, LOG_FILE);
+    logIt(INFO, "Test");
+    logIt(INFO, "Test2");
+    logIt(INFO, "Test3");
+    logIt(INFO, "Test4");
+    logIt(INFO, "Test5");
+
+    logIt(INFO, "TEST6");
+    logIt(INFO, "Test7");
+    logIt(INFO, "Test8");
+    logIt(INFO, "Test9");
+    logIt(INFO, "Test10");
+
+    logIt(INFO, "TEST6");
 
 
     while(1)

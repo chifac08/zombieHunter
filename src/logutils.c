@@ -9,9 +9,11 @@
 
 #define DATE_SIZE 26
 #define LOG_MESSAGE_SIZE 4048
+#define LOG_CACHE 5
 
 static char* cpLogFilePath = NULL;
-static LogLevel CURRENT_LOG_LEVEL = DEBUG;
+static LogLevel CURRENT_LOG_LEVEL = INFO;
+static int iListSize = 0;
 
 typedef struct node
 {
@@ -21,6 +23,23 @@ typedef struct node
 } logNode;
 static logNode* logList = NULL;
 static logNode* lastNode = NULL;
+
+/**
+ * @brief return log level as string
+ * @author chifac08
+ */
+static char* getLogLevel(LogLevel logLevel)
+{
+	static const char* strings[] = {
+			"ERROR",
+			"CRIT",
+			"WARN",
+			"INFO",
+			"DEBUG"
+	};
+
+	return strings[logLevel];
+}
 
 /*
  * @brief create a new logger node
@@ -49,6 +68,9 @@ static void pushLog(char* cpTime, char* cpMessage)
 	logNode* newNode = createNode(cpTime, cpMessage);
     newNode->next = logList;
     logList = newNode;
+
+    //increment list size counter
+    iListSize++;
 }
 
 /**
@@ -67,8 +89,14 @@ static void appendLog(char* cpTime, char* cpMessage)
 		lastNode = logList;
 	}
 
+	//link new node to the end
 	lastNode->next=newNode;
+
+	//point to last node
 	lastNode=newNode;
+
+	//increment list size counter
+	iListSize++;
 }
 
 /**
@@ -76,35 +104,28 @@ static void appendLog(char* cpTime, char* cpMessage)
  * @param index ... index for log node
  * @author flichtenegger
  */
-static void removeLog(int index)
+static void removeLog(int iIndex)
 {
 	//store head node
 	logNode* temp = logList;
 
     // If head needs to be removed
-    if (index == 0)
+    if (iIndex == 0)
     {
         logList = temp->next;   // Change head
         free(temp);               // free old head
         return;
     }
 
-    // Find previous node of the node to be deleted
-    for (int i=0; temp!=NULL && i<index-1; i++)
-         temp = temp->next;
+    for(; iIndex > 1; iIndex--)
+    	temp = temp->next;
 
-    // If position is more than number of ndoes
-    if (temp == NULL || temp->next == NULL)
-         return;
+    logNode* next = temp->next;
+    temp->next = next->next;
+    free(next);
 
-    // Node temp->next is the node to be deleted
-    // Store pointer to the next of node to be deleted
-    logNode* next = temp->next->next;
-
-    // Unlink the node from linked list
-    free(temp->next);  // Free memory
-
-    temp->next = next;  // Unlink the deleted node from list
+    //decrement list size counter
+    iListSize--;
 }
 
 /**
@@ -121,6 +142,24 @@ static void printList()
 }
 
 /**
+ * @brief flush the whole linked list
+ * @author chifac08
+ */
+static void flushList()
+{
+	logNode* next = NULL;
+
+	while(logList != NULL)
+	{
+		next = logList->next;
+		free(logList);
+		logList=next;
+	}
+	iListSize=0;
+	logList = NULL;
+}
+
+/**
  * @brief 
  * @param logLevel
  * @param cpLogFile ... absolute path for log file
@@ -134,42 +173,50 @@ void initLogging(LogLevel logLevel, char* cpLogFile)
     if(!cpLogFilePath)
     	cpLogFilePath = (char*) malloc(iLogFileLength+1);
 
-    memset(cpLogFilePath, 0, sizeof(cpLogFilePath));
+    memset(cpLogFilePath, 0, iLogFileLength+1);
     strcpy(cpLogFilePath, cpLogFile);
-    
-    //init set log level
+
     CURRENT_LOG_LEVEL = logLevel;
 }
 
 /**
- *
+ * @brief writes to log file and stdout (when debugging mode is active)
+ * @author chifac08
  */
-void writeToLogFile()
+void writeLog()
 {
 	FILE* logFile = NULL;
-	int iLogLine = 0;
-	int iFullMsgLength = DATE_SIZE+2+LOG_MESSAGE_SIZE+1;
+	int iFullMsgLength = DATE_SIZE+1+LOG_MESSAGE_SIZE+1;
 	char* cpFullMessage = NULL;
+	int iIndex = 0;
 
 	logFile = fopen(cpLogFilePath, "a+");
 
 	if(!logFile)
-		printf("ERROR");
+	{
+		printf("Could not open logfile: %s", cpLogFilePath);
+		return;
+	}
 
 	if(!cpFullMessage)
 		cpFullMessage = (char*)malloc(iFullMsgLength);
 
 	while(logList != NULL)
 	{
-		memset(cpFullMessage, 0, sizeof(cpFullMessage));
-		snprintf(cpFullMessage, sizeof(cpFullMessage)-1, "%s: %s", logList->time, logList->message);
-		fprintf(logFile, cpFullMessage, iLogLine);
-		iLogLine++;
+		memset(cpFullMessage, 0, iFullMsgLength);
+		snprintf(cpFullMessage, iFullMsgLength-1, "%s %s", logList->time, logList->message);
+		printf("%s\n", cpFullMessage);
+		fprintf(logFile, cpFullMessage);
 		logList = logList->next;
 	}
 
+	//flush current list
+	flushList();
+
 	if(cpFullMessage)
 		free(cpFullMessage);
+
+	fclose(logFile);
 }
 
 /**
@@ -184,23 +231,18 @@ void logIt(LogLevel logLevel, char* cpMessage)
     time_t now;
     struct tm* timeinfo;
     
-  //  if(logLevel <= CURRENT_LOG_LEVEL)
-    if(1)
+    if(logLevel <= CURRENT_LOG_LEVEL)
     {
+    	if(iListSize >= LOG_CACHE)
+    		writeLog();
+
         time(&now);
         timeinfo = localtime(&now);
         //TODO parse loglevel
         strftime(szTime, sizeof(szTime), "%Y-%m-%d %H:%M:%S", timeinfo);
-       // pushLog(szTime, cpMessage);
-       //printList();
-        appendLog(szTime, cpMessage);
+        snprintf(szLogMessage, sizeof(szLogMessage)-1, "[%s]: %s", getLogLevel(logLevel), cpMessage);
+        appendLog(szTime, szLogMessage);
     }
-}
-
-void test()
-{
-	removeLog(1);
-	printList();
 }
 
 /*
@@ -212,9 +254,5 @@ void destroyLogging()
 	if(cpLogFilePath)
 		free(cpLogFilePath);
 
-	while(logList != NULL)
-	{
-		free(logList);
-		logList=logList->next;
-	}
+	flushList();
 }

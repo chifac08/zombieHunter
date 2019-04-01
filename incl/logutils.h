@@ -1,10 +1,10 @@
 typedef enum 
 { 
-    ERROR=1, 
-    CRIT=2, 
-    WARN=3, 
-    INFO=4, 
-    DEBUG=5 
+    ERROR=0,
+    CRIT=1,
+    WARN=2,
+    INFO=3,
+    DEBUG=4
 } LogLevel;
 
 static void pushLog(char* cpTime, char* cpMessage);
