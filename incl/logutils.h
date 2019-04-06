@@ -1,3 +1,6 @@
+//defines
+
+//Vars
 typedef enum 
 { 
     ERROR=0,
@@ -5,9 +8,9 @@ typedef enum
     WARN=2,
     INFO=3,
     DEBUG=4
-} LogLevel;
+} LOG_LEVEL;
 
-static void pushLog(char* cpTime, char* cpMessage);
-
-extern void logIt(LogLevel logLevel, char* cpMessage);
-
+//Methods
+extern void initLogging(LOG_LEVEL logLevel, char* cpLogFile);
+extern void logIt(LOG_LEVEL logLevel, char* cpMessage);
+extern void destroyLogging();

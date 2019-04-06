@@ -3,24 +3,27 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 #include <time.h>
-#include <logutils.h>
+#include <string.h>
+#include <unistd.h>
+#include "logutils.h"
 
+//defines
 #define DATE_SIZE 26
 #define LOG_MESSAGE_SIZE 4048
 #define LOG_CACHE 5
 
-static char* cpLogFilePath = NULL;
-static LogLevel CURRENT_LOG_LEVEL = INFO;
-static int iListSize = 0;
-
+//vars
 typedef struct node
 {
     char time[DATE_SIZE];
     char message[LOG_MESSAGE_SIZE];
     struct node* next;
 } logNode;
+
+static char* cpLogFilePath = NULL;
+static LOG_LEVEL CURRENT_LOG_LEVEL = INFO;
+static int iListSize = 0;
 static logNode* logList = NULL;
 static logNode* lastNode = NULL;
 
@@ -28,7 +31,7 @@ static logNode* lastNode = NULL;
  * @brief return log level as string
  * @author chifac08
  */
-static char* getLogLevel(LogLevel logLevel)
+static const char* getLogLevel(LOG_LEVEL logLevel)
 {
 	static const char* strings[] = {
 			"ERROR",
@@ -160,30 +163,10 @@ static void flushList()
 }
 
 /**
- * @brief 
- * @param logLevel
- * @param cpLogFile ... absolute path for log file
- * @author chifac08
- */
-void initLogging(LogLevel logLevel, char* cpLogFile)
-{
-    int iLogFileLength = strlen(cpLogFile);
-
-    //copy log file path
-    if(!cpLogFilePath)
-    	cpLogFilePath = (char*) malloc(iLogFileLength+1);
-
-    memset(cpLogFilePath, 0, iLogFileLength+1);
-    strcpy(cpLogFilePath, cpLogFile);
-
-    CURRENT_LOG_LEVEL = logLevel;
-}
-
-/**
  * @brief writes to log file and stdout (when debugging mode is active)
  * @author chifac08
  */
-void writeLog()
+static void writeLog()
 {
 	FILE* logFile = NULL;
 	int iFullMsgLength = DATE_SIZE+1+LOG_MESSAGE_SIZE+1;
@@ -220,11 +203,31 @@ void writeLog()
 }
 
 /**
+ * @brief
+ * @param logLevel
+ * @param cpLogFile ... absolute path for log file
+ * @author chifac08
+ */
+void initLogging(LOG_LEVEL logLevel, char* cpLogFile)
+{
+    int iLogFileLength = strlen(cpLogFile);
+
+    //copy log file path
+    if(!cpLogFilePath)
+    	cpLogFilePath = (char*) malloc(iLogFileLength+1);
+
+    memset(cpLogFilePath, 0, iLogFileLength+1);
+    strcpy(cpLogFilePath, cpLogFile);
+
+    CURRENT_LOG_LEVEL = logLevel;
+}
+
+/**
  * @brief log message to log file
  * @param cpMessage
  * @author chifac08
  */
-void logIt(LogLevel logLevel, char* cpMessage)
+void logIt(LOG_LEVEL logLevel, char* cpMessage)
 {
     char szLogMessage[LOG_MESSAGE_SIZE] = {0};
     char szTime[DATE_SIZE] = {0};
