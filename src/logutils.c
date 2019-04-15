@@ -94,6 +94,9 @@ static void appendLog(char* cpTime, char* cpMessage)
 	//link new node to the end
 	lastNode->next=newNode;
 
+	//link new node to null
+	newNode->next=NULL;
+
 	//point to last node
 	lastNode=newNode;
 
