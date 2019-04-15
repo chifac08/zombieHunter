@@ -11,7 +11,6 @@
 //defines
 #define DATE_SIZE 26
 #define LOG_MESSAGE_SIZE 4048
-#define LOG_CACHE 5
 
 //vars
 typedef struct node
@@ -21,27 +20,27 @@ typedef struct node
     struct node* next;
 } logNode;
 
-static char* cpLogFilePath = NULL;
-static LOG_LEVEL CURRENT_LOG_LEVEL = INFO;
+static LOG_LEVEL CURRENT_LOG_LEVEL = ERROR;
 static int iListSize = 0;
 static logNode* logList = NULL;
 static logNode* lastNode = NULL;
+static CONFIG logConfig;
+
+static const char* logLevelString[] = {
+		"ERROR",
+		"CRIT",
+		"WARN",
+		"INFO",
+		"DEBUG"
+};
 
 /**
  * @brief return log level as string
  * @author chifac08
  */
-static const char* getLogLevel(LOG_LEVEL logLevel)
+static char* getLogLevel(LOG_LEVEL logLevel)
 {
-	static const char* strings[] = {
-			"ERROR",
-			"CRIT",
-			"WARN",
-			"INFO",
-			"DEBUG"
-	};
-
-	return strings[logLevel];
+	return logLevelString[logLevel];
 }
 
 /*
@@ -173,11 +172,11 @@ static void writeLog()
 	char* cpFullMessage = NULL;
 	int iIndex = 0;
 
-	logFile = fopen(cpLogFilePath, "a+");
+	logFile = fopen(logConfig.logFile, "a+");
 
 	if(!logFile)
 	{
-		printf("Could not open logfile: %s", cpLogFilePath);
+		printf("Could not open logfile: %s", logConfig.logFile);
 		return;
 	}
 
@@ -203,23 +202,18 @@ static void writeLog()
 }
 
 /**
- * @brief
+ * @brief initialize logging
  * @param logLevel
  * @param cpLogFile ... absolute path for log file
  * @author chifac08
  */
-void initLogging(LOG_LEVEL logLevel, char* cpLogFile)
+void initLogging(CONFIG config)
 {
-    int iLogFileLength = strlen(cpLogFile);
+	memset(&logConfig, 0, sizeof(CONFIG));
 
-    //copy log file path
-    if(!cpLogFilePath)
-    	cpLogFilePath = (char*) malloc(iLogFileLength+1);
+	memcpy(&logConfig, &config, sizeof(CONFIG));
 
-    memset(cpLogFilePath, 0, iLogFileLength+1);
-    strcpy(cpLogFilePath, cpLogFile);
-
-    CURRENT_LOG_LEVEL = logLevel;
+    CURRENT_LOG_LEVEL = config.logLevel;
 }
 
 /**
@@ -236,7 +230,7 @@ void logIt(LOG_LEVEL logLevel, char* cpMessage)
     
     if(logLevel <= CURRENT_LOG_LEVEL)
     {
-    	if(iListSize >= LOG_CACHE)
+    	if(iListSize >= logConfig.logBuffer)
     		writeLog();
 
         time(&now);
@@ -248,14 +242,40 @@ void logIt(LOG_LEVEL logLevel, char* cpMessage)
     }
 }
 
+/**
+ * @brief return current set log level
+ * @author chifac08
+ */
+char* getCurrentLogLevel()
+{
+	return getLogLevel(CURRENT_LOG_LEVEL);
+}
+
 /*
  * @brief Free memory
  * @author chifac08
  */
 void destroyLogging()
 {
-	if(cpLogFilePath)
-		free(cpLogFilePath);
-
 	flushList();
+}
+
+/**
+ * @brief convert string to log level
+ * @author chifac08
+ */
+LOG_LEVEL parseLogLevel(char* cpLogLevel)
+{
+	LOG_LEVEL logLevel = CURRENT_LOG_LEVEL;
+
+	for(int i = 0; i < sizeof(logLevelString);i++)
+	{
+		if(strcmp(cpLogLevel, logLevelString[i]) == 0)
+		{
+			logLevel = i;
+			break;
+		}
+	}
+
+	return logLevel;
 }

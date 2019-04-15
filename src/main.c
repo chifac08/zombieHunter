@@ -4,33 +4,22 @@
 #include <string.h>
 #include <proc/procps.h>
 #include <dirent.h>
-#include <procutils.h>
-#include <logutils.h>
+#include "procutils.h"
+#include "configutils.h"
 
-#define CONFIG_FILE "/etc/opt/zombieHunter/service/hunter.conf"
-#define LOG_FILE "/tmp/test.log"
 
 int main(int argc, char **argv)
 {
 	//TODO: ifdef DEBUG
 	setvbuf(stdout, NULL, _IONBF, 0);
     int* processList = NULL;
-    
-    initLogging(DEBUG, LOG_FILE);
+    CONFIG config;
+
+    config = parseConfig();
+
+    initLogging(config.logLevel, config.logFile);
     logIt(INFO, "Test");
-    logIt(INFO, "Test2");
-    logIt(INFO, "Test3");
-    logIt(INFO, "Test4");
-    logIt(INFO, "Test5");
-
-    logIt(INFO, "TEST6");
-    logIt(INFO, "Test7");
-    logIt(INFO, "Test8");
-    logIt(INFO, "Test9");
-    logIt(INFO, "Test10");
-
-    logIt(INFO, "TEST6");
-
+    logIt(INFO, "test2");
 
     while(1)
     {

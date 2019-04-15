@@ -1,16 +1,12 @@
+#include "basement.h"
+
 //defines
 
 //Vars
-typedef enum 
-{ 
-    ERROR=0,
-    CRIT=1,
-    WARN=2,
-    INFO=3,
-    DEBUG=4
-} LOG_LEVEL;
 
 //Methods
-extern void initLogging(LOG_LEVEL logLevel, char* cpLogFile);
+extern void initLogging(CONFIG config);
 extern void logIt(LOG_LEVEL logLevel, char* cpMessage);
+extern char* getCurrentLogLevel();
 extern void destroyLogging();
+extern LOG_LEVEL parseLogLevel(char* cpLogLevel);

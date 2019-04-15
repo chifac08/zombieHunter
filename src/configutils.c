@@ -5,29 +5,53 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "basement.h"
 #include "configutils.h"
 
 static const char* config_types[] = {
 		"loglevel",
 		"logfile",
 		"logrotate",
-		"listenport"
+		"listenport",
+		"logbuffer"
 };
 
 static void buildConfig(char* cpSearchString, CONFIG* config)
 {
-	for(int i = 0; i < sizeof(config_types); i++)
+	char* cpValue = NULL;
+	bool bFound = false;
+
+	cpValue = strtok(cpSearchString, LOG_FILE_DELIMITER);
+
+	for(int i = 0; i < sizeof(config_types) && !bFound; i++)
 	{
-		if(strstr(cpSearchString, config_types[i]))
+		bFound=false;
+		if(strcmp(cpValue, config_types[i]) == 0)
 		{
+			cpValue = strtok(NULL, LOG_FILE_DELIMITER);
+			cpValue[strlen(cpValue)-1]='\0';
 			switch(i)
 			{
 				case 0:
-					printf("test");
+					config->logLevel = parseLogLevel(cpValue);
+					bFound = true;
+					break;
+				case 1:
+					snprintf(config->logFile, sizeof(config->logFile)-1, cpValue);
+					bFound = true;
+					break;
+				case 2:
+					config->logRotate=atoi(cpValue);
+					bFound = true;
+					break;
+				case 3:
+					config->listenPort=atoi(cpValue);
+					bFound = true;
+					break;
+				case 4:
+					config->logBuffer=atoi(cpValue);
+					bFound = true;
 					break;
 			}
-			break;
 		}
 	}
 }
@@ -35,37 +59,37 @@ static void buildConfig(char* cpSearchString, CONFIG* config)
 /**
  * @brief parse config file and return a struct with read information
  * @author chifac08
- * @return
+ * @return config struct
  */
-CONFIG* parseConfig(char* cpConfigFile)
+CONFIG parseConfig()
 {
     FILE* fpConfigFile = NULL;
     char szBuffer[100] = {0};
     int iBufferCount = 100;
     CONFIG config;
-    char* cpValue = NULL;
+    char* cpConfigFile = NULL;
 
-    memset(&config, 0 , sizeof(CONFIG));
+    memset(&config, 0, sizeof(CONFIG));
 
-    if(!fpConfigFile)
+    cpConfigFile = getenv("ZH_CONFIG_FILE");
+
+    if(!fpConfigFile && cpConfigFile)
     	fpConfigFile = fopen(cpConfigFile, "r");
-
-    if(!cpConfigFile)
-    	getenv("ZH_CONFIG_FILE");
+    else
+    	fpConfigFile = fopen(DEFAULT_CONFIG_FILE, "r");
 
     while(fgets(szBuffer, iBufferCount, fpConfigFile))
     {
-    	cpValue = strtok(szBuffer, LOG_FILE_DELIMITER);
-    	while(cpValue != NULL)
-    	{
-    		cpValue = strtok(NULL, LOG_FILE_DELIMITER);
-    	}
+    	buildConfig(szBuffer, &config);
     }
 
+    if(config.logFile[0] == '\0')
+    	snprintf(config.logFile, sizeof(config.logFile)-1, DEFAULT_LOG_FILE);
+
+    if(config.logRotate == 0)
+    	config.logRotate = DEFAULT_LOG_CACHE;
+
     fclose(fpConfigFile);
-}
 
-void parseValue(char* szBuffer, CONFIG* config)
-{
-
+    return config;
 }
