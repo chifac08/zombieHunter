@@ -1,24 +1,24 @@
 #Vars
-INCL_DIR=incl
+INCL_DIR=-I ./incl -I /sclogger_incl
 SRC_DIR=src
 OBJ_DIR=obj
 SRC=$(wildcard $(SRC_DIR)/*.c)
 OBJ=$(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
-INCL=$(wildcard $(INCL_DIR)/*.h)
 CC=gcc
 EXE=zombieHunterService
 CPPFLAGS=-Iincl
-CFLAGS=-Wall
-LDFLAGS= -Llib
+CFLAGS=-Wall -L ./sclogger
+LDFLAGS= -Llib 
+LIBS=sclogger.a -lpthread
 
 .PHONY: all clean
 
 all: $(EXE)
 $(EXE): $(OBJ)
-	$(CC) $(LDFLAGS) $^ -g -O0 -o $@
+	$(CC) $(LDFLAGS) $^ -g -O0 -o $@ $(LIBS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -g -O0 -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(INCL_DIR) -g -O0 -c $< -o $@
 
 clean:
 	$(RM) $(OBJ)
