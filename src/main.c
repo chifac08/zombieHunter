@@ -4,6 +4,7 @@
 #include <string.h>
 #include <proc/procps.h>
 #include <dirent.h>
+#include "SCLogger.h"
 #include "procutils.h"
 #include "configutils.h"
 
@@ -17,7 +18,7 @@ int main(int argc, char **argv)
 
     config = parseConfig();
 
-    initLogging(config.logLevel, config.logFile);
+    initLogging(config.logConfig);
     logIt(INFO, "Test");
     logIt(INFO, "test2");
 

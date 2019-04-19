@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "SCLogger.h"
 #include "configutils.h"
 
 static const char* config_types[] = {
@@ -32,15 +33,14 @@ static void buildConfig(char* cpSearchString, CONFIG* config)
 			switch(i)
 			{
 				case 0:
-					config->logLevel = parseLogLevel(cpValue);
+					config->logConfig.logLevel = parseLogLevel(cpValue);
 					bFound = true;
 					break;
 				case 1:
-					snprintf(config->logFile, sizeof(config->logFile)-1, cpValue);
+					snprintf(config->logConfig.logFile, sizeof(config->logConfig.logFile)-1, cpValue);
 					bFound = true;
 					break;
 				case 2:
-					config->logRotate=atoi(cpValue);
 					bFound = true;
 					break;
 				case 3:
@@ -48,7 +48,7 @@ static void buildConfig(char* cpSearchString, CONFIG* config)
 					bFound = true;
 					break;
 				case 4:
-					config->logBuffer=atoi(cpValue);
+					config->logConfig.logBuffer=atoi(cpValue);
 					bFound = true;
 					break;
 			}
@@ -83,11 +83,8 @@ CONFIG parseConfig()
     	buildConfig(szBuffer, &config);
     }
 
-    if(config.logFile[0] == '\0')
-    	snprintf(config.logFile, sizeof(config.logFile)-1, DEFAULT_LOG_FILE);
-
-    if(config.logRotate == 0)
-    	config.logRotate = DEFAULT_LOG_CACHE;
+    if(config.logConfig.logFile[0] == '\0')
+    	snprintf(config.logConfig.logFile, sizeof(config.logConfig.logFile)-1, DEFAULT_LOG_FILE);
 
     fclose(fpConfigFile);
 
