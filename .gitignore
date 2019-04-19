@@ -6,3 +6,5 @@ zombieHunterService
 \.cproject
 
 obj/
+
+*.a
