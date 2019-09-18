@@ -14,26 +14,26 @@ int main(int argc, char **argv)
 	//TODO: ifdef DEBUG
 	setvbuf(stdout, NULL, _IONBF, 0);
     int* processList = NULL;
+    char *cpDir = "/proc/";
     CONFIG config;
 
     config = parseConfig();
 
     initLogging(config.logConfig);
-    logIt(INFO, "Test");
-    logIt(INFO, "test2");
+    logIt(INFO, "Start");
 
     while(1)
     {
-        /*
-        processList = getProcessList(PROCESS_DIR);
-        printf("%d", *(processList+0));
+        processList = getProcessList(cpDir);
 
         checkProcessState(processList);
 
         processList = NULL;
-         */
+
         sleep(10);
     }
+
+    logIt(INFO, "End");
 
     destroyLogging();
 

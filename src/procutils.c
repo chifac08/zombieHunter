@@ -58,7 +58,7 @@ void checkProcessState(int* processList)
         
     for(int i = 0; i < PROCESS_ARRAY_SIZE; i++)
     {
-        memset(szPath, 0, sizeof(szPath));
+    	memset(szPath, 0, sizeof(szPath));
         snprintf(szPath, sizeof(szPath)-1, "%s/%d/status", PROCESS_DIR, *(processList+i));
         
         procFile = fopen(szPath, "r");
@@ -80,10 +80,3 @@ void checkProcessState(int* processList)
         procFile = NULL;
     }
 }
-
-void doit()
-{
-    printf("doit");
-}
-
-void hons();

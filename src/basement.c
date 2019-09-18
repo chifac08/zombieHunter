@@ -31,16 +31,3 @@ bool contains(char** list, char* strTarget)
 
 	return bFound;
 }
-
-
-void removeSpecialChars(char* cpTarget, char** listSpecChars)
-{
-	int iTargetLength = strlen(cpTarget);
-
-	for(int i = 0; i < iTargetLength;i++)
-	{
-		char* cpChar = cpTarget[i];
-		if(contains(&listSpecChars, cpChar))
-			printf("test");
-	}
-}

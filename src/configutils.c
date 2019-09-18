@@ -16,6 +16,15 @@ static const char* config_types[] = {
 		"logbuffer"
 };
 
+/**
+ * Reads all valid parameters from log file
+ * Add new parameters here
+ * Call by reference!
+ *
+ * @param cpSearchString ...  String to search in
+ * @param config ... struct with parameters
+ * @author chifac08
+ */
 static void buildConfig(char* cpSearchString, CONFIG* config)
 {
 	char* cpValue = NULL;
@@ -57,7 +66,7 @@ static void buildConfig(char* cpSearchString, CONFIG* config)
 }
 
 /**
- * @brief parse config file and return a struct with read information
+ * @brief parse config file and return a struct of type CONFIG
  * @author chifac08
  * @return config struct
  */
