@@ -13,7 +13,10 @@ static const char* config_types[] = {
 		"logfile",
 		"logrotate",
 		"listenport",
-		"logbuffer"
+		"logbuffer",
+		"host",
+		"port",
+		"sendtimeout"
 };
 
 /**
@@ -60,6 +63,19 @@ static void buildConfig(char* cpSearchString, CONFIG* config)
 					config->logConfig.logBuffer=atoi(cpValue);
 					bFound = true;
 					break;
+				case 5:
+					snprintf(config->host, sizeof(config->host)-1, cpValue);
+					bFound = true;
+					break;
+				case 6:
+					config->port = atoi(cpValue);
+					bFound = true;
+					break;
+				case 7:
+					config->sendTimeout=atoi(cpValue);
+					bFound = true;
+					break;
+
 			}
 		}
 	}
