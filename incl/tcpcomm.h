@@ -16,5 +16,6 @@ short createSocket();
 int connectSocket();
 int sendSocket(char* cpRequest, short lenRequest);
 int receiveSocket(char* cpRc, short lenRc);
+void destroySocket();
 
 #endif /* INCL_TCPCOMM_H_ */

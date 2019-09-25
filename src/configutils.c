@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "SCLogger.h"
 #include "configutils.h"
+#include "SCLogger.h"
 
 static const char* config_types[] = {
 		"loglevel",
