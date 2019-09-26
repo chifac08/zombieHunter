@@ -16,7 +16,8 @@ static const char* config_types[] = {
 		"logbuffer",
 		"host",
 		"port",
-		"sendtimeout"
+		"sendtimeout",
+		"checkintervall"
 };
 
 /**
@@ -75,7 +76,10 @@ static void buildConfig(char* cpSearchString, CONFIG* config)
 					config->sendTimeout=atoi(cpValue);
 					bFound = true;
 					break;
-
+				case 8:
+					config->checkIntervall=atoi(cpValue);
+					bFound = true;
+					break;
 			}
 		}
 	}

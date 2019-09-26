@@ -12,11 +12,16 @@
 
 #include "LogTypes.h"
 
-#define DEFAULT_LISTEN_PORT 5557
-#define DEFAULT_LOG_ROTATE 10
+
 #define LOG_FILE_DELIMITER "="
+#define TEMP_FILE_DIR "/dev/shm/zombieHunter"
+
+//defualt values
 #define DEFAULT_CONFIG_FILE "/etc/opt/zombieHunter/zombieHunter.cfg"
 #define DEFAULT_LOG_FILE "/var/log/zombieHunter/log.log"
+#define DEFAULT_LISTEN_PORT 5557
+#define DEFAULT_LOG_ROTATE 10
+#define DEFAULT_CHECK_INTERVALL 30
 
 typedef enum {
 	false=0,
@@ -30,6 +35,7 @@ typedef struct
 	char host[16];
 	unsigned int port;
 	unsigned int sendTimeout;
+	unsigned int checkIntervall;
 } CONFIG;
 
 typedef struct

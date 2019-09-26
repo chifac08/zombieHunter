@@ -4,7 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <procutils.h>
-#include <pthread.h>
+#include <time.h>
 #include "SCLogger.h"
 #include "basement.h"
 
@@ -60,7 +60,7 @@ static void* thread_method(void* args)
 }
 
 /**
- * @brief checks the state of a process
+ * @brief checks the state of a process and backups the status file if process is a zombie
  * @author chifac08
  * @param processList ... list with pids
  */
@@ -71,8 +71,8 @@ void checkProcessState(int* processList)
     char szBuffer[1024] = {0};
     bool bIsZombie = false;
     int iLineCount = 0;
-    int iFileSize = 0;
-    pthread_t p1;
+    char szDestFile[64] = {0};
+    int iCopyRet = -1;
     
     if(processList == NULL)
         return;
@@ -112,8 +112,11 @@ void checkProcessState(int* processList)
 
         if(bIsZombie)
         {
-        	pthread_create(&p1, NULL, thread_method, &szPath);
-        	pthread_join(p1, NULL);
+        	memset(szDestFile, 0, sizeof(szDestFile));
+        	createDir(TEMP_FILE_DIR, S_IRWXU);
+        	snprintf(szDestFile, sizeof(szDestFile)-1, "%s/%d_%d", TEMP_FILE_DIR, *(processList+i), (int)time(NULL));
+        	iCopyRet = copyFile(szPath, szDestFile);
+        	//TODO: handle copy error (maybe for stats)
         }
     }
 }

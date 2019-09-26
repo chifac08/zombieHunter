@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <sys/stat.h>
 #include "typvars.h"
 
 #define DEFAULT_CONFIG_FILE "/opt/etc/zombieHunter/hunter.cfg"
@@ -13,3 +14,5 @@ ZOMBIE_NODE* prepend(ZOMBIE_NODE* head, PROCESS_STATUS proc_stat);
 int count(ZOMBIE_NODE* head);
 ZOMBIE_NODE* removeBack(ZOMBIE_NODE* head);
 int loadFileInMemory(char* cpFileName, char** szResult);
+void createDir(char* cpDir, mode_t mode);
+int copyFile(char* cpSourcePath, char* cpDestPath);

@@ -9,8 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/stat.h>
+#include <dirent.h>
 #include "basement.h"
+#include "SCLogger.h"
 #include "typvars.h"
 #include "tcpcomm.h"
 
@@ -195,23 +196,49 @@ void createDir(char* cpDir, mode_t mode)
 }
 
 /**
- * @brief
- * @param
- * @param
+ * @brief copy a file from source to destination
+ * @param cpSourcePath ... source file
+ * @param cpDestPath ... destination file
  * @author chifac08
+ * @return 0 ... ok
+ *        -1 ... cannot open source file
+ *        -2 ... cannot open destination file
  */
 int copyFile(char* cpSourcePath, char* cpDestPath)
 {
 	FILE* cpSourceFile = NULL;
 	FILE* cpDestFile = NULL;
 	char szLogMessage[1024] = {0};
+	char ch;
 
-	cpSourceFile = fopen(cpSourceFile, "r");
+	cpSourceFile = fopen(cpSourcePath, "r");
 
 	if(!cpSourceFile)
 	{
+		memset(szLogMessage, 0, sizeof(szLogMessage));
+		formatLog(szLogMessage, "Cannot open source file %s", cpSourcePath);
+		logIt(ERROR, szLogMessage);
 		return -1;
 	}
+
+	cpDestFile = fopen(cpDestPath, "w");
+
+	if(!cpDestFile)
+	{
+		memset(szLogMessage, 0, sizeof(szLogMessage));
+		formatLog(szLogMessage, "Cannot open destination file %s", cpSourcePath);
+		logIt(ERROR, szLogMessage);
+		fclose(cpSourceFile);
+		return -2;
+	}
+
+	while((ch = fgetc(cpSourceFile)) != EOF)
+	{
+		fputc(ch, cpDestFile);
+	}
+
+	fclose(cpSourceFile);
+	fclose(cpDestFile);
 
 	return 0;
 }

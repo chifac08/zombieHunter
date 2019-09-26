@@ -25,6 +25,9 @@ int main(int argc, char **argv)
     initLogging(config.logConfig);
     logIt(INFO, "Start");
 
+    if(config.checkIntervall == 0)
+    	config.checkIntervall = DEFAULT_CHECK_INTERVALL;
+
     while(1)
     {
         processList = getProcessList(cpDir);
@@ -33,7 +36,7 @@ int main(int argc, char **argv)
 
         processList = NULL;
 
-        sleep(10);
+        sleep(config.checkIntervall);
     }
 
     logIt(INFO, "End");
