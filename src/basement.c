@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include "basement.h"
 #include "SCLogger.h"
@@ -242,6 +243,47 @@ int copyFile(char* cpSourcePath, char* cpDestPath)
 
 	return 0;
 }
+
+/**
+ * @brief checks if a stop flag file exists
+ * @param cpFileName ... absolute path of file
+ * @author chifac08
+ * @return true ... file exists
+ *        false ... file does not exist
+ */
+bool checkStopFlag(const char* cpFileName)
+{
+	struct stat buff;
+
+	if(stat(cpFileName, &buff) == 0)
+		return true;
+
+	return false;
+}
+
+/*
+ * @brief removes a file
+ * @param cpFileName .. absolute path of file
+ * @author chifac08
+ * @return 0 ... OK
+ *        -1 ... could not delete file
+ */
+int removeFile(const char* cpFileName)
+{
+	int iStatus = 0;
+	char szLogMessage[1024] = {0};
+
+	iStatus = remove(cpFileName);
+
+	if(iStatus != 0)
+	{
+		formatLog(szLogMessage, "Could not delete File %s. Return Code: %d", cpFileName, iStatus);
+		return -1;
+	}
+
+	return 0;
+}
+
 
 /**
  * @brief

@@ -15,6 +15,7 @@
 
 #define LOG_FILE_DELIMITER "="
 #define TEMP_FILE_DIR "/dev/shm/zombieHunter"
+#define STOP_FLAG_FILE "/tmp/zombieHunter.flg"
 
 //defualt values
 #define DEFAULT_CONFIG_FILE "/etc/opt/zombieHunter/zombieHunter.cfg"
@@ -102,12 +103,5 @@ typedef struct zombie_linked_list
   PROCESS_STATUS proc_stat;
   struct zombie_linked_list* next;
 } ZOMBIE_NODE;
-
-typedef struct proc_file_linked_list
-{
-	char* fileData;
-	struct proc_file_linked_list* next;
-} PROC_NODE;
-
 
 #endif /* INCL_TYPVARS_H_ */

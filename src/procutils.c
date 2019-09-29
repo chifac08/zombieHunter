@@ -46,19 +46,6 @@ int* getProcessList(char* cpDir)
     return processList;
 }
 
-static void* thread_method(void* args)
-{
-	int iSize = 0;
-	char* cpFileName = NULL;
-	char* cpResult = NULL;
-
-	cpFileName = (char*)args;
-
-	iSize = loadFileInMemory(cpFileName, &cpResult);
-
-	return (void*)iSize;
-}
-
 /**
  * @brief checks the state of a process and backups the status file if process is a zombie
  * @author chifac08
@@ -120,36 +107,3 @@ void checkProcessState(int* processList)
         }
     }
 }
-
-/*
-PROC_NODE* create(FILE* cpProcFile, PROC_NODE* next)
-{
-	PROC_NODE* node = NULL;
-
-	node = (PROC_NODE*)malloc(sizeof(PROC_NODE));
-
-	if(!node)
-	{
-		logIt(ERROR, "Error creating a new proc node!");
-		return -1;
-	}
-
-
-	node->next = next;
-
-	return node;
-}
-
-PROC_NODE* prepend(PROC_NODE* head, FILE* cpProcFile)
-{
-
-}
-
-PROCESS_STATUS loadProcessInfo()
-{
-	char szBuffer[1024] = {0};
-
-
-	while(fgets(szBuffer, sizeof(szBuffer),
-}
-*/

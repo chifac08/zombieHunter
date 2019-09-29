@@ -16,3 +16,5 @@ ZOMBIE_NODE* removeBack(ZOMBIE_NODE* head);
 int loadFileInMemory(char* cpFileName, char** szResult);
 void createDir(char* cpDir, mode_t mode);
 int copyFile(char* cpSourcePath, char* cpDestPath);
+bool checkStopFlag(const char* cpFileName);
+int removeFile(const char* cpFileName);
