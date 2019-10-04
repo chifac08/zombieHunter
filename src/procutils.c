@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <procutils.h>
 #include <time.h>
+#include <errno.h>
 #include "SCLogger.h"
 #include "basement.h"
 
@@ -13,25 +14,28 @@
 
 
 /**
- * @brief Loads all active processes from /proc
+ * @brief Loads all active processes from a given dir (usually /proc)
  * @author chifac08
  * @param cpDir ... Process dir
  * @return list with PIDs
  */
-int* getProcessList(char* cpDir)
+int* getProcessList(const char* cpDir)
 {
     //TODO: dynamic allocated process list
     int iCounter = 0;
     static int processList[PROCESS_ARRAY_SIZE];
     DIR* dir = NULL;
     struct dirent* de = NULL;
+    char szLogMessage[1024] = {0};
     
+
     dir = opendir(cpDir);
     
     if(dir == NULL)
     {
-        printf("could not open directory: %s", cpDir);
-        return 0;
+    	formatLog(szLogMessage, sizeof(szLogMessage), "Could not open directory: %s. Error: [%d] - %s", cpDir, errno, strerror(errno));
+    	logIt(ERROR, szLogMessage);
+        return NULL;
     }
     
     while((de = readdir(dir)) != NULL)

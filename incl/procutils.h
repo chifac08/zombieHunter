@@ -5,5 +5,5 @@
 //vars
 
 //Methods
-int* getProcessList(char* cpDir);
+int* getProcessList(const char* cpDir);
 void checkProcessState(int* processList);

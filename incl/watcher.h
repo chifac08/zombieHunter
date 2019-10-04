@@ -14,7 +14,7 @@
 
 //fn
 int initWatcher();
-int addDirectory(int iFileDescriptor, char* cpDirectory);
+int addDirectory(int iFileDescriptor, const char* cpDirectory);
 void* watch(void* arg);
 void removeWatcher(int iFileDescriptor, int iWriteDescriptor);
 

@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <errno.h>
 #include "basement.h"
 #include "SCLogger.h"
 #include "typvars.h"
@@ -157,7 +158,7 @@ int loadFileInMemory(char* cpFileName, char** szResult)
 		*szResult = NULL;
 		//write as INFO cause it is not that bad when we can't read the file
 		//maybe we will catch it with the next try
-		snprintf(szLogMessage, sizeof(szLogMessage)-1, "Cannot open file %s", cpFileName);
+		formatLog(szLogMessage, sizeof(szLogMessage), "Cannot open file %s. Error: [%d] - %s", cpFileName, errno, strerror(errno));
 		logIt(INFO, szLogMessage);
 		return -1;
 	}
@@ -170,8 +171,7 @@ int loadFileInMemory(char* cpFileName, char** szResult)
 	if(iSize != fread(*szResult, sizeof(char), iSize, cpProcFile))
 	{
 		free(*szResult);
-		memset(szLogMessage, 0, sizeof(szLogMessage));
-		snprintf(szLogMessage, sizeof(szLogMessage)-1, "Cannot read file %s", cpFileName);
+		formatLog(szLogMessage, sizeof(szLogMessage), "Cannot read file %s. Error: [%d] - %s", cpFileName, errno, strerror(errno));
 		logIt(INFO, szLogMessage);
 		return -2;
 	}
@@ -188,12 +188,25 @@ int loadFileInMemory(char* cpFileName, char** szResult)
  * @param mode ... octal permissions
  * @author chifac08
  */
-void createDir(char* cpDir, mode_t mode)
+int createDir(char* cpDir, mode_t mode)
 {
 	struct stat st = {0};
+	int iReturn = 0;
+	char szLogMessage[1024] = {0};
 
-	if(stat(cpDir, &st) == -1)
-		mkdir(cpDir, mode);
+	if(stat(cpDir, &st) < 0)
+	{
+		iReturn = mkdir(cpDir, mode);
+
+		if(iReturn < 0)
+		{
+			formatLog(szLogMessage, sizeof(szLogMessage), "Could not create directory %s. Error: [%d] - %s", cpDir, errno, strerror(errno));
+			logIt(ERROR, szLogMessage);
+			return -1;
+		}
+	}
+
+	return iReturn;
 }
 
 /**
@@ -216,8 +229,7 @@ int copyFile(char* cpSourcePath, char* cpDestPath)
 
 	if(!cpSourceFile)
 	{
-		memset(szLogMessage, 0, sizeof(szLogMessage));
-		formatLog(szLogMessage, "Cannot open source file %s", cpSourcePath);
+		formatLog(szLogMessage, sizeof(szLogMessage), "Cannot open source file %s", cpSourcePath);
 		logIt(ERROR, szLogMessage);
 		return -1;
 	}
@@ -226,8 +238,7 @@ int copyFile(char* cpSourcePath, char* cpDestPath)
 
 	if(!cpDestFile)
 	{
-		memset(szLogMessage, 0, sizeof(szLogMessage));
-		formatLog(szLogMessage, "Cannot open destination file %s", cpSourcePath);
+		formatLog(szLogMessage, sizeof(szLogMessage), "Cannot open destination file %s", cpSourcePath);
 		logIt(ERROR, szLogMessage);
 		fclose(cpSourceFile);
 		return -2;
@@ -277,7 +288,8 @@ int removeFile(const char* cpFileName)
 
 	if(iStatus != 0)
 	{
-		formatLog(szLogMessage, "Could not delete File %s. Return Code: %d", cpFileName, iStatus);
+		formatLog(szLogMessage, sizeof(szLogMessage), "Could not delete File %s. Return Code: %d", cpFileName, iStatus);
+		logIt(ERROR, szLogMessage);
 		return -1;
 	}
 

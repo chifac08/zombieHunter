@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/inotify.h>
+#include <errno.h>
 #include "watcher.h"
 #include "SCLogger.h"
 #include "basement.h"
@@ -36,7 +37,7 @@ int initWatcher()
 
 	if(iFileDescriptor < 0)
 	{
-		formatLog(szLogMessage, "Could not initialize inotify watcher! Return code: %d", iFileDescriptor);
+		formatLog(szLogMessage, sizeof(szLogMessage), "Could not initialize inotify watcher! Return code: %d", iFileDescriptor);
 		logIt(ERROR, szLogMessage);
 		return -1;
 	}
@@ -52,7 +53,7 @@ int initWatcher()
  * @ return -1 ... NOK
  *       != -1 ... write descriptor
  */
-int addDirectory(int iFileDescriptor, char* cpDirectory)
+int addDirectory(int iFileDescriptor, const char* cpDirectory)
 {
 	int iWriteDescriptor = -1;
 	char szLogMessage[1024] = {0};
@@ -61,7 +62,7 @@ int addDirectory(int iFileDescriptor, char* cpDirectory)
 
 	if(iWriteDescriptor < 0)
 	{
-		formatLog(szLogMessage, "Could not add write descriptor to directory %s. Return Code: %d", cpDirectory, iWriteDescriptor);
+		formatLog(szLogMessage, sizeof(szLogMessage), "Could not add write descriptor to directory %s. Error: [%d] - %s", cpDirectory, errno, strerror(errno));
 		logIt(ERROR, szLogMessage);
 		return -1;
 	}
@@ -92,17 +93,13 @@ void* watch(void* arg)
 
 		while(i < iLength)
 		{
-			event = ( struct inotify_event * ) &szBuffer[ i ];
+			event = (struct inotify_event*)&szBuffer[i];
 
 			if(event->len)
 			{
-				if ( event->mask & IN_CREATE ) {
-					if ( event->mask & IN_ISDIR ) {
-					  formatLog(szLogMessage, "New directory %s created.\n", event->name );
-					  logIt(INFO, szLogMessage);
-					}
-					else {
-					  formatLog(szLogMessage, "New file %s created.\n", event->name );
+				if (event->mask & IN_CREATE) {
+					if (!(event->mask & IN_ISDIR)) {
+					  formatLog(szLogMessage, sizeof(szLogMessage), "New file %s created.\n", event->name );
 					  logIt(INFO, szLogMessage);
 					}
 				}

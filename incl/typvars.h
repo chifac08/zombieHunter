@@ -23,6 +23,7 @@
 #define DEFAULT_LISTEN_PORT 5557
 #define DEFAULT_LOG_ROTATE 10
 #define DEFAULT_CHECK_INTERVALL 30
+#define DEFAULT_PROCESS_DIR "/proc"
 
 typedef enum {
 	false=0,

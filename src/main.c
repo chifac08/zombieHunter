@@ -25,6 +25,9 @@ int main(int argc, char **argv)
     ZOMBIE_NODE* head = NULL;
     char szLogMessage[1024] = {0};
     pthread_t watcherId;
+    int iWatcher = -1;
+    int* processList = NULL;
+    int iRet = 0;
 
     memset(&config, 0, sizeof(CONFIG));
 
@@ -36,8 +39,14 @@ int main(int argc, char **argv)
     if(config.checkIntervall == 0)
     	config.checkIntervall = DEFAULT_CHECK_INTERVALL;
 
-    int iWatcher = initWatcher();
-    addDirectory(iWatcher, "/home/flichten");
+    //create dir for zombie process data
+	iRet = createDir(TEMP_FILE_DIR, S_IRWXU);
+
+	//TODO: implement cleanup method
+
+    //init file watcher
+    iWatcher = initWatcher();
+    addDirectory(iWatcher, TEMP_FILE_DIR);
     pthread_create(&watcherId, NULL, watch, (void*)(intptr_t)iWatcher);
 
     while(1)
@@ -47,13 +56,11 @@ int main(int argc, char **argv)
     		break;
     	}
 
-    	/*
-        processList = getProcessList(cpDir);
+        processList = getProcessList(DEFAULT_PROCESS_DIR);
 
         checkProcessState(processList);
 
         processList = NULL;
-        */
 
         sleep(config.checkIntervall);
     }
@@ -65,6 +72,7 @@ int main(int argc, char **argv)
 
 	if(removeFile(STOP_FLAG_FILE) != 0)
 	{
+		destroyLogging();
 		return -1;
 	}
 
