@@ -22,14 +22,14 @@
 int main(int argc, char **argv)
 {
     CONFIG config;
-    ZOMBIE_NODE* head = NULL;
+    FILE_WATCHER_ARG fWatcherArg;
     char szLogMessage[1024] = {0};
-    pthread_t watcherId;
-    int iWatcher = -1;
+    pthread_t watcherId, commId;
     int* processList = NULL;
     int iRet = 0;
 
     memset(&config, 0, sizeof(CONFIG));
+    memset(&fWatcherArg, 0, sizeof(fWatcherArg));
 
     config = parseConfig();
 
@@ -42,12 +42,20 @@ int main(int argc, char **argv)
     //create dir for zombie process data
 	iRet = createDir(TEMP_FILE_DIR, S_IRWXU);
 
-	//TODO: implement cleanup method
+	if(iRet != 0)
+		goto cleanup;
 
     //init file watcher
-    iWatcher = initWatcher();
-    addDirectory(iWatcher, TEMP_FILE_DIR);
-    pthread_create(&watcherId, NULL, watch, (void*)(intptr_t)iWatcher);
+    fWatcherArg.iWatcher = initWatcher();
+    fWatcherArg.zombie_process_head = NULL;
+    fWatcherArg.zombie_process_tail = NULL;
+    addDirectory(fWatcherArg.iWatcher, TEMP_FILE_DIR);
+
+    //thread for file watcher
+    pthread_create(&watcherId, NULL, watch, &fWatcherArg);
+
+    //thread for backoffice communication
+    pthread_create(&commId, NULL, test, &fWatcherArg);
 
     while(1)
     {
@@ -68,15 +76,18 @@ int main(int argc, char **argv)
     logIt(INFO, "End");
 
     //end procedures
-	pthread_cancel(watcherId);
+	cleanup:
+		pthread_cancel(watcherId);
 
-	if(removeFile(STOP_FLAG_FILE) != 0)
-	{
+		deleteList(fWatcherArg.zombie_process_head);
+
+		if(removeFile(STOP_FLAG_FILE) != 0)
+		{
+			destroyLogging();
+			return -1;
+		}
+
 		destroyLogging();
-		return -1;
-	}
-
-	destroyLogging();
 
 	return 0;
 }

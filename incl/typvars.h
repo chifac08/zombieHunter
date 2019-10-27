@@ -25,6 +25,7 @@
 #define DEFAULT_CHECK_INTERVALL 30
 #define DEFAULT_PROCESS_DIR "/proc"
 
+
 typedef enum {
 	false=0,
 	true=1
@@ -99,10 +100,18 @@ typedef struct
 	int nonvoluntary_ctxt_switches;
 } PROCESS_STATUS;
 
+
 typedef struct zombie_linked_list
 {
-  PROCESS_STATUS proc_stat;
-  struct zombie_linked_list* next;
+	char file_path[1024];
+	struct zombie_linked_list* next;
 } ZOMBIE_NODE;
+
+typedef struct file_watcher_arg
+{
+	int iWatcher;
+	ZOMBIE_NODE* zombie_process_head;
+	ZOMBIE_NODE* zombie_process_tail;
+} FILE_WATCHER_ARG;
 
 #endif /* INCL_TYPVARS_H_ */

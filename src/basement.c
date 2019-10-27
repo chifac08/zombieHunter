@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
 #include "basement.h"
@@ -17,38 +16,18 @@
 #include "typvars.h"
 #include "tcpcomm.h"
 
-/**
- * @brief Check if list contains element. list must have a fixed size!
- * @author chifac08
- * @return true or false
- */
-bool contains(char** list, char* strTarget)
-{
-	int iListLength = strlen(list);
-	bool bFound = false;
-
-	for(int i = 0; i < iListLength;i++)
-	{
-		if(strcmp(strTarget, *(list+i)) == 0)
-		{
-			bFound = true;
-			break;
-		}
-	}
-
-	return bFound;
-}
 
 /**
  * @brief creates the header node
- * @param proc_stat ... struct with process information
+ * @param cpFile ... absolute file path
  * @param next      ... pointer to the next node
  * @author chifac08
  * @return header node
  */
-ZOMBIE_NODE* create(PROCESS_STATUS proc_stat, ZOMBIE_NODE* next)
+ZOMBIE_NODE* create(char* cpFile, ZOMBIE_NODE* next)
 {
 	ZOMBIE_NODE* node = NULL;
+	int iPathLength = 0;
 
 	node = (ZOMBIE_NODE*)malloc(sizeof(ZOMBIE_NODE));
 
@@ -58,27 +37,56 @@ ZOMBIE_NODE* create(PROCESS_STATUS proc_stat, ZOMBIE_NODE* next)
 		return NULL;
 	}
 
-	node->proc_stat = proc_stat;
+	memset(node->file_path, 0, sizeof(node->file_path));
+	snprintf(node->file_path, sizeof(node->file_path)-1, cpFile);
 	node->next = next;
 
 	return node;
 }
 
 /**
+ * @brief free memory of an ZOMBIE_NODE
+ * @author chifac08
+ */
+static void freeNode(ZOMBIE_NODE* node)
+{
+	if(!node)
+		return NULL;
+
+	free(node);
+	node=NULL;
+}
+
+/**
  * @brief insert a new node before the first one (FIFO)
- * @param head      ... current head node
- * @param proc_stat ... struct to insert
+ * @param head   ... current head node
+ * @param cpFile ... absolute file path
  * @author chifac08
  * @return header points to current inserted node
  */
-ZOMBIE_NODE* prepend(ZOMBIE_NODE* head, PROCESS_STATUS proc_stat)
+ZOMBIE_NODE* prepend(ZOMBIE_NODE* head, char* cpFile)
 {
 	ZOMBIE_NODE* node = NULL;
 
-	node = create(proc_stat, head);
+	node = create(cpFile, head);
 	head = node;
 
 	return head;
+}
+
+/**
+ * TODO
+ */
+ZOMBIE_NODE* pop(ZOMBIE_NODE* tail)
+{
+	ZOMBIE_NODE* newTail = NULL;
+
+	if(tail->next)
+		newTail = tail->next;
+
+	freeNode(tail);
+
+	return newTail;
 }
 
 /**
@@ -132,10 +140,33 @@ ZOMBIE_NODE* removeBack(ZOMBIE_NODE* head)
 	if(cursor == head)
 		head = NULL;
 
-	if(cursor)
-		free(cursor);
+	freeNode(cursor);
 
 	return head;
+}
+
+/**
+ * @brief delete whole list
+ * @author chifac08
+ */
+void deleteList(ZOMBIE_NODE* head)
+{
+	if(!head)
+		return NULL;
+
+	ZOMBIE_NODE* cursor = NULL;
+	ZOMBIE_NODE* next = NULL;
+
+	cursor = head;
+	while(cursor != NULL)
+	{
+		if(cursor)
+		{
+			next = cursor->next;
+			freeNode(cursor);
+		}
+		cursor = next;
+	}
 }
 
 /**
@@ -296,6 +327,24 @@ int removeFile(const char* cpFileName)
 	return 0;
 }
 
+//TODO: remove test method
+void test(void* arg)
+{
+	FILE_WATCHER_ARG* fWatcherArg = (FILE_WATCHER_ARG*)arg;
+	char szLogMessage[1024] = {0};
+
+	while(1)
+	{
+		if(fWatcherArg->zombie_process_tail)
+		{
+			fWatcherArg->zombie_process_tail = pop(fWatcherArg->zombie_process_tail);
+			formatLog(szLogMessage, sizeof(szLogMessage), "queue size: %d", count(fWatcherArg->zombie_process_head));
+			logIt(INFO, szLogMessage);
+		}
+
+		sleep(30);
+	}
+}
 
 /**
  * @brief
