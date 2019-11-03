@@ -10,6 +10,7 @@
 #include "configutils.h"
 #include "tcpcomm.h"
 #include "watcher.h"
+#include "zombiequeue.h"
 
 /**
  * List of exit codes:
@@ -24,9 +25,8 @@ int main(int argc, char **argv)
     CONFIG config;
     FILE_WATCHER_ARG fWatcherArg;
     char szLogMessage[1024] = {0};
-    Queue* zombieQueue = NULL;
-    pthread_t watcherId = NULL;
-    pthread_t commId = NULL;
+    pthread_t watcherId = 0;
+    pthread_t commId = 0;
 
     int* processList = NULL;
     int iRet = 0;
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 	cleanup:
 		pthread_cancel(watcherId);
 
-		clearQeue(fWatcherArg.zombie_queue);
+		clearQueue(fWatcherArg.zombie_queue);
 
 		if(removeFile(STOP_FLAG_FILE) != 0)
 		{

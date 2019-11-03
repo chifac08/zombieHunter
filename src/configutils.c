@@ -50,7 +50,7 @@ static void buildConfig(char* cpSearchString, CONFIG* config)
 					bFound = true;
 					break;
 				case 1:
-					snprintf(config->logConfig.logFile, sizeof(config->logConfig.logFile)-1, cpValue);
+					snprintf(config->logConfig.logFile, sizeof(config->logConfig.logFile)-1, "%s", cpValue);
 					bFound = true;
 					break;
 				case 2:
@@ -65,7 +65,7 @@ static void buildConfig(char* cpSearchString, CONFIG* config)
 					bFound = true;
 					break;
 				case 5:
-					snprintf(config->host, sizeof(config->host)-1, cpValue);
+					snprintf(config->host, sizeof(config->host)-1, "%s", cpValue);
 					bFound = true;
 					break;
 				case 6:

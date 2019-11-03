@@ -8,11 +8,6 @@
 #define PROCESS_STATE_LINE 3
 
 //methods
-Queue* createQueue(int iMaxElements);
-void enqueue(Queue* queue, char* cpElement);
-char* front(Queue* queue);
-char* dequeue(Queue* queue);
-void clearQeue(Queue* queue);
 int loadFileInMemory(char* cpFileName, char** szResult);
 int createDir(char* cpDir, mode_t mode);
 int copyFile(char* cpSourcePath, char* cpDestPath);
