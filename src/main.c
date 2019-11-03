@@ -4,12 +4,11 @@
 #include <string.h>
 #include <proc/procps.h>
 #include <dirent.h>
-#include <pthread.h>
 #include "SCLogger.h"
+#include "basement.h"
 #include "procutils.h"
 #include "configutils.h"
 #include "tcpcomm.h"
-#include "basement.h"
 #include "watcher.h"
 
 /**
@@ -17,6 +16,7 @@
  *
  * 0  ... OK
  * -1 ... could not delete a file
+ * -2 ... could not initialize mutex
  */
 
 int main(int argc, char **argv)
@@ -24,7 +24,10 @@ int main(int argc, char **argv)
     CONFIG config;
     FILE_WATCHER_ARG fWatcherArg;
     char szLogMessage[1024] = {0};
-    pthread_t watcherId, commId;
+    Queue* zombieQueue = NULL;
+    pthread_t watcherId = NULL;
+    pthread_t commId = NULL;
+
     int* processList = NULL;
     int iRet = 0;
 
@@ -47,8 +50,17 @@ int main(int argc, char **argv)
 
     //init file watcher
     fWatcherArg.iWatcher = initWatcher();
-    fWatcherArg.zombie_process_head = NULL;
-    fWatcherArg.zombie_process_tail = NULL;
+    fWatcherArg.zombie_queue = createQueue(DEFAULT_QUEUE_SIZE);
+
+    //init mutex
+    if (pthread_mutex_init(&fWatcherArg.mutex, NULL) != 0)
+    {
+        logIt(ERROR, "could not init mutex!");
+        iRet = -2;
+        goto cleanup;
+    }
+
+    //add watcher to directory
     addDirectory(fWatcherArg.iWatcher, TEMP_FILE_DIR);
 
     //thread for file watcher
@@ -79,7 +91,7 @@ int main(int argc, char **argv)
 	cleanup:
 		pthread_cancel(watcherId);
 
-		deleteList(fWatcherArg.zombie_process_head);
+		clearQeue(fWatcherArg.zombie_queue);
 
 		if(removeFile(STOP_FLAG_FILE) != 0)
 		{

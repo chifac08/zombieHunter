@@ -10,6 +10,7 @@
 #ifndef INCL_TYPVARS_H_
 #define INCL_TYPVARS_H_
 
+#include <pthread.h>
 #include "LogTypes.h"
 
 
@@ -24,7 +25,7 @@
 #define DEFAULT_LOG_ROTATE 10
 #define DEFAULT_CHECK_INTERVALL 30
 #define DEFAULT_PROCESS_DIR "/proc"
-
+#define DEFAULT_QUEUE_SIZE 500
 
 typedef enum {
 	false=0,
@@ -100,18 +101,20 @@ typedef struct
 	int nonvoluntary_ctxt_switches;
 } PROCESS_STATUS;
 
-
-typedef struct zombie_linked_list
+typedef struct zombie_queue
 {
-	char file_path[1024];
-	struct zombie_linked_list* next;
-} ZOMBIE_NODE;
+	unsigned int capacity;
+	unsigned int size;
+	int front;
+	int rear;
+	char **elements;
+} Queue;
 
 typedef struct file_watcher_arg
 {
 	int iWatcher;
-	ZOMBIE_NODE* zombie_process_head;
-	ZOMBIE_NODE* zombie_process_tail;
+	Queue* zombie_queue;
+	pthread_mutex_t mutex;
 } FILE_WATCHER_ARG;
 
 #endif /* INCL_TYPVARS_H_ */

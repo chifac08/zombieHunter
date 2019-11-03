@@ -14,7 +14,6 @@
 #include<arpa/inet.h>
 #include<unistd.h>
 #include "tcpcomm.h"
-#include "typvars.h"
 #include "SCLogger.h"
 #include "basement.h"
 
@@ -43,7 +42,7 @@ short createSocket(CONFIG config)
 	logIt(DEBUG, "Create tcp socket");
 	hSocket = socket(AF_INET, SOCK_STREAM, 0);
 
-	snprintf(szLogMessage, sizeof(szLogMessage)-1, "TCP Socket returned %d", hSocket);
+	formatLog(szLogMessage, sizeof(szLogMessage), "TCP Socket returned %d", hSocket);
 	logIt(DEBUG, szLogMessage);
 
 	return hSocket;
@@ -64,7 +63,7 @@ int connectSocket()
 	memset(&remote, 0, sizeof(struct sockaddr_in));
 
 	logIt(DEBUG, "Trying to connect to tcp socket");
-	snprintf(szLogMessage, sizeof(szLogMessage)-1, "IP: %s Port: %d", tcpConfig->host, tcpConfig->port);
+	formatLog(szLogMessage, sizeof(szLogMessage), "IP: %s Port: %d", tcpConfig->host, tcpConfig->port);
 	logIt(DEBUG, szLogMessage);
 
 	remote.sin_addr.s_addr = inet_addr(tcpConfig->host);
@@ -74,7 +73,7 @@ int connectSocket()
 	iRet = connect(hSocket, (struct sockaddr*)&remote, sizeof(struct sockaddr_in));
 
 	memset(szLogMessage, 0, sizeof(szLogMessage));
-	snprintf(szLogMessage, sizeof(szLogMessage)-1, "Connection returned: %d", iRet);
+	formatLog(szLogMessage, sizeof(szLogMessage), "Connection returned: %d", iRet);
 	logIt(DEBUG, szLogMessage);
 
 	return iRet;
@@ -101,7 +100,7 @@ int sendSocket(char* cpRequest, short lenRequest)
 
 	if(setsockopt(hSocket, SOL_SOCKET, SO_SNDTIMEO, (char*)&tv, sizeof(struct timeval)) < 0)
 	{
-		printf("Time out");
+		logIt(ERROR, "Connection timed out!");
 		return -1;
 	}
 
@@ -159,5 +158,3 @@ void destroySocket()
 
 	memset(szLogMessage, 0, sizeof(szLogMessage));
 }
-
-

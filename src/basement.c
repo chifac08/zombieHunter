@@ -8,164 +8,103 @@
  */
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
 #include "basement.h"
 #include "SCLogger.h"
-#include "typvars.h"
 #include "tcpcomm.h"
 
-
-/**
- * @brief creates the header node
- * @param cpFile ... absolute file path
- * @param next      ... pointer to the next node
- * @author chifac08
- * @return header node
- */
-ZOMBIE_NODE* create(char* cpFile, ZOMBIE_NODE* next)
+Queue* createQueue(int iMaxElements)
 {
-	ZOMBIE_NODE* node = NULL;
-	int iPathLength = 0;
+	Queue* queue = NULL;
+	queue = (Queue*)malloc(sizeof(Queue));
+	memset(queue, 0, sizeof(Queue));
+	queue->capacity = iMaxElements;
+	queue->size = 0;
+	queue->front = 0;
+	queue->rear = -1;
+	queue->elements = (char**)malloc(sizeof(char*)*iMaxElements);
+	memset(queue->elements, 0, sizeof(sizeof(char)*iMaxElements));
 
-	node = (ZOMBIE_NODE*)malloc(sizeof(ZOMBIE_NODE));
+	return queue;
+}
 
-	if(!node)
+void enqueue(Queue* queue, char* cpElement)
+{
+	if(queue->size == queue->capacity)
 	{
-		logIt(ERROR, "Error creating a new zombie node!");
-		return NULL;
+		//TODO error handling
+		return;
 	}
 
-	memset(node->file_path, 0, sizeof(node->file_path));
-	snprintf(node->file_path, sizeof(node->file_path)-1, cpFile);
-	node->next = next;
+	queue->size++;
+	queue->rear = queue->rear+1;
 
-	return node;
-}
-
-/**
- * @brief free memory of an ZOMBIE_NODE
- * @author chifac08
- */
-static void freeNode(ZOMBIE_NODE* node)
-{
-	if(!node)
-		return NULL;
-
-	free(node);
-	node=NULL;
-}
-
-/**
- * @brief insert a new node before the first one (FIFO)
- * @param head   ... current head node
- * @param cpFile ... absolute file path
- * @author chifac08
- * @return header points to current inserted node
- */
-ZOMBIE_NODE* prepend(ZOMBIE_NODE* head, char* cpFile)
-{
-	ZOMBIE_NODE* node = NULL;
-
-	node = create(cpFile, head);
-	head = node;
-
-	return head;
-}
-
-/**
- * TODO
- */
-ZOMBIE_NODE* pop(ZOMBIE_NODE* tail)
-{
-	ZOMBIE_NODE* newTail = NULL;
-
-	if(tail->next)
-		newTail = tail->next;
-
-	freeNode(tail);
-
-	return newTail;
-}
-
-/**
- * @brief counts all elements in a linked list
- * @param head ... pointer to head of linked list
- * @author chifac08
- * @return counted objects
- */
-int count(ZOMBIE_NODE* head)
-{
-	ZOMBIE_NODE* cursor = NULL;
-	int iCount = 0;
-
-	cursor = head;
-	while(cursor != NULL)
+	if(queue->rear == queue->capacity)
 	{
-		iCount++;
-		cursor = cursor->next;
+		queue->rear = 0;
 	}
 
-	return iCount;
+	queue->elements[queue->rear] = (char*)malloc(sizeof(cpElement)+1);
+	memset(queue->elements[queue->rear], 0, sizeof(cpElement)+1);
+	strcpy(queue->elements[queue->rear], cpElement);
 }
 
-/*
- * @brief remove node from back of the list
- * @param head ... pointer to head of linked list
- * @author chifac08
- * @return current pointer to head
- */
-ZOMBIE_NODE* removeBack(ZOMBIE_NODE* head)
+char* front(Queue* queue)
 {
-	if(!head)
+	if(queue->size < 1)
 		return NULL;
 
-	ZOMBIE_NODE* cursor = NULL;
-	ZOMBIE_NODE* back = NULL;
-
-	cursor = head;
-	back = NULL;
-
-	while(cursor->next != NULL)
-	{
-		back = cursor;
-		cursor = cursor->next;
-	}
-
-	if(back)
-		back->next=NULL;
-
-	/* if this is the last node on the list*/
-	if(cursor == head)
-		head = NULL;
-
-	freeNode(cursor);
-
-	return head;
+	return queue->elements[queue->front];
 }
 
-/**
- * @brief delete whole list
- * @author chifac08
- */
-void deleteList(ZOMBIE_NODE* head)
+char* dequeue(Queue* queue)
 {
-	if(!head)
+	char* cpReturn = NULL;
+
+	if(queue->size < 1)
 		return NULL;
 
-	ZOMBIE_NODE* cursor = NULL;
-	ZOMBIE_NODE* next = NULL;
+	cpReturn = queue->elements[queue->front];
+	queue->front = (queue->front + 1)%queue->capacity;
+	queue->size -= 1;
 
-	cursor = head;
-	while(cursor != NULL)
+	return cpReturn;
+}
+
+void clearQeue(Queue* queue)
+{
+	if(queue)
 	{
-		if(cursor)
+		for(int i = 0; i < queue->size;i++)
 		{
-			next = cursor->next;
-			freeNode(cursor);
+			if(queue->elements[i])
+				free(queue->elements[i]);
 		}
-		cursor = next;
+
+		free(queue);
+	}
+}
+
+void test(void* arg)
+{
+	FILE_WATCHER_ARG* fWatcherArg = (FILE_WATCHER_ARG*)arg;
+	char szLogMessage[1024] = {0};
+
+	while(1)
+	{
+		pthread_mutex_lock(&fWatcherArg->mutex);
+		char* cpReturn = dequeue(fWatcherArg->zombie_queue);
+
+		if(cpReturn)
+		{
+			snprintf(szLogMessage, sizeof(szLogMessage), "%s", cpReturn);
+			logIt(INFO, szLogMessage);
+			free(cpReturn);
+		}
+
+		pthread_mutex_unlock(&fWatcherArg->mutex);
+		sleep(30);
 	}
 }
 
@@ -325,25 +264,6 @@ int removeFile(const char* cpFileName)
 	}
 
 	return 0;
-}
-
-//TODO: remove test method
-void test(void* arg)
-{
-	FILE_WATCHER_ARG* fWatcherArg = (FILE_WATCHER_ARG*)arg;
-	char szLogMessage[1024] = {0};
-
-	while(1)
-	{
-		if(fWatcherArg->zombie_process_tail)
-		{
-			fWatcherArg->zombie_process_tail = pop(fWatcherArg->zombie_process_tail);
-			formatLog(szLogMessage, sizeof(szLogMessage), "queue size: %d", count(fWatcherArg->zombie_process_head));
-			logIt(INFO, szLogMessage);
-		}
-
-		sleep(30);
-	}
 }
 
 /**

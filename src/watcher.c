@@ -16,7 +16,6 @@
 #include <sys/inotify.h>
 #include <errno.h>
 #include "watcher.h"
-#include "typvars.h"
 #include "SCLogger.h"
 #include "basement.h"
 
@@ -101,22 +100,12 @@ void* watch(void* arg)
 			{
 				if (event->mask & IN_CREATE) {
 					if (!(event->mask & IN_ISDIR)) {
-					  formatLog(szLogMessage, sizeof(szLogMessage), "New file %s created.\n", event->name );
-					  logIt(INFO, szLogMessage);
+						pthread_mutex_lock(&fWatcherArg->mutex);
+						formatLog(szLogMessage, sizeof(szLogMessage), "New file %s created.", event->name );
+						logIt(INFO, szLogMessage);
 
-					  if(!fWatcherArg->zombie_process_head)
-					  {
-						  fWatcherArg->zombie_process_head = create(event->name, NULL);
-						  fWatcherArg->zombie_process_tail = fWatcherArg->zombie_process_head;
-						  formatLog(szLogMessage, sizeof(szLogMessage), "queue size: %d", count(fWatcherArg->zombie_process_head));
-						  logIt(INFO, szLogMessage);
-					  }
-					  else
-					  {
-						  fWatcherArg->zombie_process_head = prepend(fWatcherArg->zombie_process_head, event->name);
-						  formatLog(szLogMessage, sizeof(szLogMessage), "queue size: %d", count(fWatcherArg->zombie_process_head));
-						  logIt(INFO, szLogMessage);
-					  }
+						enqueue(fWatcherArg->zombie_queue, event->name);
+						pthread_mutex_unlock(&fWatcherArg->mutex);
 					}
 				}
 			}
