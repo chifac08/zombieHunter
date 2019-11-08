@@ -17,8 +17,9 @@
 #define LOG_FILE_DELIMITER "="
 #define TEMP_FILE_DIR "/dev/shm/zombieHunter"
 #define STOP_FLAG_FILE "/tmp/zombieHunter.flg"
+#define READER_BUFFER 512
 
-//defualt values
+//default values
 #define DEFAULT_CONFIG_FILE "/etc/opt/zombieHunter/zombieHunter.cfg"
 #define DEFAULT_LOG_FILE "/var/log/zombieHunter/log.log"
 #define DEFAULT_LISTEN_PORT 5557

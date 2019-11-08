@@ -13,4 +13,4 @@ int createDir(char* cpDir, mode_t mode);
 int copyFile(char* cpSourcePath, char* cpDestPath);
 bool checkStopFlag(const char* cpFileName);
 int removeFile(const char* cpFileName);
-void test(void* arg);
+void sendProcessData(void* arg);

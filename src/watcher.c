@@ -83,9 +83,18 @@ void* watch(void* arg)
 	struct inotify_event *event = NULL;
 	int i = 0;
 	char szLogMessage[1024] = {0};
+	int iRc = 0;
 
 	while(1)
 	{
+		iRc = pthread_mutex_trylock(&fWatcherArg->mutex);
+
+		if(iRc == EBUSY)
+		{
+			sleep(10);
+			break;
+		}
+
 		iLength = 0;
 		memset(szBuffer, 0, sizeof(szBuffer));
 		event = NULL;
@@ -100,17 +109,18 @@ void* watch(void* arg)
 			{
 				if (event->mask & IN_CREATE) {
 					if (!(event->mask & IN_ISDIR)) {
-						pthread_mutex_lock(&fWatcherArg->mutex);
 						formatLog(szLogMessage, sizeof(szLogMessage), "New file %s created.", event->name );
 						logIt(INFO, szLogMessage);
 
 						enqueue(fWatcherArg->zombie_queue, event->name);
-						pthread_mutex_unlock(&fWatcherArg->mutex);
 					}
 				}
 			}
 			i += EVENT_SIZE + event->len;
 		}
+
+		pthread_mutex_unlock(&fWatcherArg->mutex);
+		sleep(30);
 	}
 }
 

@@ -67,7 +67,7 @@ int main(int argc, char **argv)
     pthread_create(&watcherId, NULL, watch, &fWatcherArg);
 
     //thread for backoffice communication
-    pthread_create(&commId, NULL, test, &fWatcherArg);
+    pthread_create(&commId, NULL, sendProcessData, &fWatcherArg);
 
     while(1)
     {
@@ -90,6 +90,8 @@ int main(int argc, char **argv)
     //end procedures
 	cleanup:
 		pthread_cancel(watcherId);
+		pthread_cancel(commId);
+		pthread_mutex_destroy(&fWatcherArg.mutex);
 
 		clearQueue(fWatcherArg.zombie_queue);
 

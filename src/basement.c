@@ -6,6 +6,7 @@
  *  Created on: Apr 7, 2019
  *      Author: chifac08
  */
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
@@ -14,28 +15,6 @@
 #include "SCLogger.h"
 #include "tcpcomm.h"
 #include "zombiequeue.h"
-
-void test(void* arg)
-{
-	FILE_WATCHER_ARG* fWatcherArg = (FILE_WATCHER_ARG*)arg;
-	char szLogMessage[1024] = {0};
-
-	while(1)
-	{
-		pthread_mutex_lock(&fWatcherArg->mutex);
-		char* cpReturn = dequeue(fWatcherArg->zombie_queue);
-
-		if(cpReturn)
-		{
-			snprintf(szLogMessage, sizeof(szLogMessage), "%s", cpReturn);
-			logIt(INFO, szLogMessage);
-			free(cpReturn);
-		}
-
-		pthread_mutex_unlock(&fWatcherArg->mutex);
-		sleep(30);
-	}
-}
 
 /**
  * @brief loads the whole content of a file into memory
@@ -196,16 +175,76 @@ int removeFile(const char* cpFileName)
 }
 
 /**
- * @brief
- * @param
+ *
  * @author chifac08
- * @return
  */
-int sendProcessData()
+void sendProcessData(void* arg)
 {
-	int iRet = -1;
+	FILE_WATCHER_ARG* fWatcherArg = (FILE_WATCHER_ARG*)arg;
+	char szLogMessage[1024] = {0};
+	FILE* fZombieFile = NULL;
+	char* cpReturn = NULL;
+	char szFilePath[512] = {0};
+	char szBuffer[READER_BUFFER] = {0};
+	char* cpHelper = NULL;
+	int iRc = 0;
 
+	while(1)
+	{
+		iRc = pthread_mutex_trylock(&fWatcherArg->mutex);
 
+		if(iRc == EBUSY)
+		{
+			sleep(5);
+			continue;
+		}
 
-	return iRet;
+		memset(szBuffer, 0, sizeof(szBuffer));
+		memset(szFilePath, 0, sizeof(szFilePath));
+
+		cpReturn = dequeue(fWatcherArg->zombie_queue);
+
+		if(!cpReturn)
+		{
+			logIt(ERROR, "No path for file!");
+			pthread_mutex_unlock(&fWatcherArg->mutex);
+			sleep(5);
+			continue;
+		}
+
+		snprintf(szFilePath, sizeof(szFilePath)-1, "%s/%s", TEMP_FILE_DIR, cpReturn);
+
+		fZombieFile = fopen(szFilePath, "r");
+
+		if(!fZombieFile)
+		{
+			formatLog(szLogMessage, sizeof(szLogMessage), "Cannot open file %s. Error: [%d] - %s", szFilePath, errno, strerror(errno));
+			logIt(ERROR, szLogMessage);
+			continue;
+		}
+
+		while(fgets(szBuffer, READER_BUFFER, fZombieFile) != NULL)
+		{
+			cpHelper = strtok(szBuffer, "\t");
+			while(cpHelper != NULL)
+			{
+				printf("%s", cpHelper);
+				cpHelper = strtok(NULL, "\t");
+			}
+			cpHelper = NULL;
+			memset(szBuffer, 0, sizeof(szBuffer));
+		}
+
+		fclose(fZombieFile);
+		fZombieFile = NULL;
+
+		if(cpReturn)
+		{
+			free(cpReturn);
+			cpReturn = NULL;
+		}
+
+		pthread_mutex_unlock(&fWatcherArg->mutex);
+		sleep(30);
+	}
 }
