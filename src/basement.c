@@ -11,6 +11,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <errno.h>
+#include <unistd.h>
 #include "basement.h"
 #include "SCLogger.h"
 #include "tcpcomm.h"
@@ -174,6 +175,22 @@ int removeFile(const char* cpFileName)
 	return 0;
 }
 
+void loadAllFilesFromDir()
+{
+	struct dirent* de;
+
+	DIR* dir = opendir(TEMP_FILE_DIR);
+
+	if(!dir)
+	{
+		printf("Problem");
+		return NULL;
+	}
+
+	while((de = readdir(dir)) != NULL)
+		printf("%s\n", de->d_name);
+}
+
 /**
  *
  * @author chifac08
@@ -188,9 +205,17 @@ void sendProcessData(void* arg)
 	char szBuffer[READER_BUFFER] = {0};
 	char* cpHelper = NULL;
 	int iRc = 0;
+	Queue* zombieQueueSnap = NULL;
 
 	while(1)
 	{
+		if(fWatcherArg->zombie_queue->size < 1)
+		{
+			//TODO switch for time
+			sleep(30);
+			continue;
+		}
+
 		iRc = pthread_mutex_trylock(&fWatcherArg->mutex);
 
 		if(iRc == EBUSY)
@@ -199,52 +224,69 @@ void sendProcessData(void* arg)
 			continue;
 		}
 
-		memset(szBuffer, 0, sizeof(szBuffer));
-		memset(szFilePath, 0, sizeof(szFilePath));
-
-		cpReturn = dequeue(fWatcherArg->zombie_queue);
-
-		if(!cpReturn)
-		{
-			logIt(ERROR, "No path for file!");
-			pthread_mutex_unlock(&fWatcherArg->mutex);
-			sleep(5);
-			continue;
-		}
-
-		snprintf(szFilePath, sizeof(szFilePath)-1, "%s/%s", TEMP_FILE_DIR, cpReturn);
-
-		fZombieFile = fopen(szFilePath, "r");
-
-		if(!fZombieFile)
-		{
-			formatLog(szLogMessage, sizeof(szLogMessage), "Cannot open file %s. Error: [%d] - %s", szFilePath, errno, strerror(errno));
-			logIt(ERROR, szLogMessage);
-			continue;
-		}
-
-		while(fgets(szBuffer, READER_BUFFER, fZombieFile) != NULL)
-		{
-			cpHelper = strtok(szBuffer, "\t");
-			while(cpHelper != NULL)
-			{
-				printf("%s", cpHelper);
-				cpHelper = strtok(NULL, "\t");
-			}
-			cpHelper = NULL;
-			memset(szBuffer, 0, sizeof(szBuffer));
-		}
-
-		fclose(fZombieFile);
-		fZombieFile = NULL;
-
-		if(cpReturn)
-		{
-			free(cpReturn);
-			cpReturn = NULL;
-		}
+		copyQueue(fWatcherArg->zombie_queue, &zombieQueueSnap);
+		clearQueue(fWatcherArg->zombie_queue);
 
 		pthread_mutex_unlock(&fWatcherArg->mutex);
+
+		while(zombieQueueSnap->size > 0)
+		{
+			memset(szBuffer, 0, sizeof(szBuffer));
+			memset(szFilePath, 0, sizeof(szFilePath));
+
+			cpReturn = dequeue(zombieQueueSnap);
+
+			if(!cpReturn)
+			{
+				logIt(ERROR, "No path for file!");
+	//			pthread_mutex_unlock(&fWatcherArg->mutex);
+				sleep(5);
+				continue;
+			}
+
+			snprintf(szFilePath, sizeof(szFilePath)-1, "%s/%s", TEMP_FILE_DIR, cpReturn);
+
+			fZombieFile = fopen(szFilePath, "r");
+
+			if(!fZombieFile)
+			{
+				formatLog(szLogMessage, sizeof(szLogMessage), "Cannot open file %s. Error: [%d] - %s", szFilePath, errno, strerror(errno));
+				logIt(ERROR, szLogMessage);
+				continue;
+			}
+
+			while(fgets(szBuffer, READER_BUFFER, fZombieFile) != NULL)
+			{
+				cpHelper = strtok(szBuffer, "\t");
+				while(cpHelper != NULL)
+				{
+					//printf("%s", cpHelper);
+					cpHelper = strtok(NULL, "\t");
+				}
+				cpHelper = NULL;
+				memset(szBuffer, 0, sizeof(szBuffer));
+			}
+
+			printf("Send file %s\n", szFilePath);
+
+			fclose(fZombieFile);
+			fZombieFile = NULL;
+
+			removeFile(szFilePath);
+
+			if(cpReturn)
+			{
+				free(cpReturn);
+				cpReturn = NULL;
+			}
+		}
+
+		if(zombieQueueSnap)
+		{
+			free(zombieQueueSnap);
+			zombieQueueSnap=NULL;
+		}
+
 		sleep(30);
 	}
 }

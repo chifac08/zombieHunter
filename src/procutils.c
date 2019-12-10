@@ -60,6 +60,7 @@ void checkProcessState(int* processList)
     FILE* procFile = NULL;
     char szPath[512] = {0};
     char szBuffer[1024] = {0};
+    char szLogMessage[1024] = {0};
     bool bIsZombie = false;
     int iLineCount = 0;
     char szDestFile[64] = {0};
@@ -85,7 +86,8 @@ void checkProcessState(int* processList)
         {
             if(strstr(szBuffer, "(zombie)"))
             {
-                printf("%d: %s",*(processList+i), szBuffer);
+            	formatLog(szLogMessage, sizeof(szLogMessage), "Zombie found: %d - %s",*(processList+i), szBuffer);
+                logIt(WARN, szLogMessage);
                 bIsZombie = true;
                 break;
             }  

@@ -39,7 +39,8 @@ typedef struct
 	unsigned int listenPort;
 	char host[16];
 	unsigned int port;
-	unsigned int sendTimeout;
+	unsigned int reportIntervall;
+	unsigned int reportSize;
 	unsigned int checkIntervall;
 } CONFIG;
 

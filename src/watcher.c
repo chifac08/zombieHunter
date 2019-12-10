@@ -91,7 +91,8 @@ void* watch(void* arg)
 
 		if(iRc == EBUSY)
 		{
-			sleep(10);
+			printf("locked queue");
+			sleep(5);
 			break;
 		}
 
@@ -120,7 +121,7 @@ void* watch(void* arg)
 		}
 
 		pthread_mutex_unlock(&fWatcherArg->mutex);
-		sleep(30);
+		sleep(10);
 	}
 }
 

@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 		pthread_cancel(commId);
 		pthread_mutex_destroy(&fWatcherArg.mutex);
 
-		clearQueue(fWatcherArg.zombie_queue);
+		freeQueue(fWatcherArg.zombie_queue);
 
 		if(removeFile(STOP_FLAG_FILE) != 0)
 		{

@@ -82,9 +82,38 @@ void clearQueue(Queue* queue)
 		for(int i = 0; i < queue->size;i++)
 		{
 			if(queue->elements[i])
+			{
 				free(queue->elements[i]);
+				queue->elements[i]=NULL;
+			}
 		}
+		queue->size = 0;
+		queue->front = 0;
+		queue->rear = -1;
+	}
+}
 
-		free(queue);
+void freeQueue(Queue* queue)
+{
+	clearQueue(queue);
+	free(queue);
+}
+
+void copyQueue(Queue* sourceQueue, Queue** destQueue)
+{
+	if(sourceQueue)
+	{
+		*destQueue = createQueue(sourceQueue->capacity);
+
+		for(int i = 0; i < sourceQueue->size;i++)
+		{
+			(*destQueue)->elements[i] = (char*)malloc(sizeof(sourceQueue->elements[i])+1);
+			memset((*destQueue)->elements[i], 0, sizeof(sourceQueue->elements[i])+1);
+			memcpy((*destQueue)->elements[i], sourceQueue->elements[i], strlen(sourceQueue->elements[i]));
+		}
+		(*destQueue)->capacity = sourceQueue->capacity;
+		(*destQueue)->front = sourceQueue->front;
+		(*destQueue)->rear = sourceQueue->rear;
+		(*destQueue)->size = sourceQueue->size;
 	}
 }

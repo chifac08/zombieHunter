@@ -16,5 +16,7 @@ void enqueue(Queue* queue, char* cpElement);
 char* front(Queue* queue);
 char* dequeue(Queue* queue);
 void clearQueue(Queue* queue);
+void freeQueue(Queue* queue);
+void copyQueue(Queue* sourceQueue, Queue** destQueue);
 
 #endif /* INCL_ZOMBIEQUEUE_H_ */
