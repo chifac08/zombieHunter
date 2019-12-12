@@ -28,7 +28,6 @@ int* getProcessList(const char* cpDir)
     struct dirent* de = NULL;
     char szLogMessage[1024] = {0};
     
-
     dir = opendir(cpDir);
     
     if(dir == NULL)
@@ -47,6 +46,12 @@ int* getProcessList(const char* cpDir)
         }
     }
     
+    if(closedir(dir) < 0)
+    {
+    	formatLog(szLogMessage, sizeof(szLogMessage), "Could not close directory: %s. Error: [%d] - %s", cpDir, errno, strerror(errno));
+    	logIt(ERROR, szLogMessage);
+    }
+
     return processList;
 }
 
@@ -86,7 +91,7 @@ void checkProcessState(int* processList)
         {
             if(strstr(szBuffer, "(zombie)"))
             {
-            	formatLog(szLogMessage, sizeof(szLogMessage), "Zombie found: %d - %s",*(processList+i), szBuffer);
+            	formatLog(szLogMessage, sizeof(szLogMessage), "Zombie found: %d",*(processList+i));
                 logIt(WARN, szLogMessage);
                 bIsZombie = true;
                 break;

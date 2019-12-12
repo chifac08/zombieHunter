@@ -27,7 +27,7 @@ Queue* createQueue(int iMaxElements)
 	queue->front = 0;
 	queue->rear = -1;
 	queue->elements = (char**)malloc(sizeof(char*)*iMaxElements);
-	memset(queue->elements, 0, sizeof(sizeof(char)*iMaxElements));
+	memset(queue->elements, 0, sizeof(sizeof(char*)*iMaxElements));
 
 	return queue;
 }
@@ -48,9 +48,9 @@ void enqueue(Queue* queue, char* cpElement)
 		queue->rear = 0;
 	}
 
-	queue->elements[queue->rear] = (char*)malloc(sizeof(cpElement)+1);
-	memset(queue->elements[queue->rear], 0, sizeof(cpElement)+1);
-	strcpy(queue->elements[queue->rear], cpElement);
+	queue->elements[queue->rear] = (char*)malloc(strlen(cpElement)+1);
+	memset(queue->elements[queue->rear], 0, strlen(cpElement)+1);
+	memcpy(queue->elements[queue->rear], cpElement, strlen(cpElement));
 }
 
 char* front(Queue* queue)
@@ -107,8 +107,8 @@ void copyQueue(Queue* sourceQueue, Queue** destQueue)
 
 		for(int i = 0; i < sourceQueue->size;i++)
 		{
-			(*destQueue)->elements[i] = (char*)malloc(sizeof(sourceQueue->elements[i])+1);
-			memset((*destQueue)->elements[i], 0, sizeof(sourceQueue->elements[i])+1);
+			(*destQueue)->elements[i] = (char*)malloc(strlen(sourceQueue->elements[i])+1);
+			memset((*destQueue)->elements[i], 0, strlen(sourceQueue->elements[i])+1);
 			memcpy((*destQueue)->elements[i], sourceQueue->elements[i], strlen(sourceQueue->elements[i]));
 		}
 		(*destQueue)->capacity = sourceQueue->capacity;
