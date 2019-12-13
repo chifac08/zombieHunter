@@ -76,8 +76,8 @@ int addDirectory(int iFileDescriptor, const char* cpDirectory)
  */
 void* watch(void* arg)
 {
-	FILE_WATCHER_ARG* fWatcherArg = (FILE_WATCHER_ARG*)arg;
-	int iFileDescriptor = fWatcherArg->iWatcher;
+	ZOMBIE_ARG* zombieArg = (ZOMBIE_ARG*)arg;
+	int iFileDescriptor = zombieArg->iWatcher;
 	int iLength = 0;
 	char szBuffer[EVENT_BUF_LEN] = {0};
 	struct inotify_event *event = NULL;
@@ -87,7 +87,7 @@ void* watch(void* arg)
 
 	while(1)
 	{
-		iRc = pthread_mutex_trylock(&fWatcherArg->mutex);
+		iRc = pthread_mutex_trylock(&zombieArg->mutex);
 
 		if(iRc == EBUSY)
 		{
@@ -113,14 +113,14 @@ void* watch(void* arg)
 						formatLog(szLogMessage, sizeof(szLogMessage), "New file %s created.", event->name );
 						logIt(INFO, szLogMessage);
 
-						enqueue(fWatcherArg->zombie_queue, event->name);
+						enqueue(zombieArg->zombie_queue, event->name);
 					}
 				}
 			}
 			i += EVENT_SIZE + event->len;
 		}
 
-		pthread_mutex_unlock(&fWatcherArg->mutex);
+		pthread_mutex_unlock(&zombieArg->mutex);
 		sleep(10);
 	}
 }

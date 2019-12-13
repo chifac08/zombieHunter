@@ -112,11 +112,13 @@ typedef struct zombie_queue
 	char **elements;
 } Queue;
 
-typedef struct file_watcher_arg
+typedef struct zombie_arg
 {
 	int iWatcher;
 	Queue* zombie_queue;
+	pthread_t watcherId;
+	pthread_t commId;
 	pthread_mutex_t mutex;
-} FILE_WATCHER_ARG;
+} ZOMBIE_ARG;
 
 #endif /* INCL_TYPVARS_H_ */

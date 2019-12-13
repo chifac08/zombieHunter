@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include "typvars.h"
 
 #define DEFAULT_LOG_CACHE 5
@@ -14,3 +15,5 @@ int copyFile(char* cpSourcePath, char* cpDestPath);
 bool checkStopFlag(const char* cpFileName);
 int removeFile(const char* cpFileName);
 void sendProcessData(void* arg);
+int cleanup(ZOMBIE_ARG zombieArg);
+int createStopFlag();

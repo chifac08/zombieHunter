@@ -19,20 +19,17 @@
  * -1 ... could not delete a file
  * -2 ... could not initialize mutex
  */
+ZOMBIE_ARG zombieArg;
 
 int main(int argc, char **argv)
 {
     CONFIG config;
-    FILE_WATCHER_ARG fWatcherArg;
     char szLogMessage[1024] = {0};
-    pthread_t watcherId = 0;
-    pthread_t commId = 0;
-
     int* processList = NULL;
     int iRet = 0;
 
     memset(&config, 0, sizeof(CONFIG));
-    memset(&fWatcherArg, 0, sizeof(fWatcherArg));
+    memset(&zombieArg, 0, sizeof(zombieArg));
 
     config = parseConfig();
 
@@ -42,6 +39,9 @@ int main(int argc, char **argv)
     if(config.checkIntervall == 0)
     	config.checkIntervall = DEFAULT_CHECK_INTERVALL;
 
+    //install signal handler
+    installSignalHandler();
+
     //create dir for zombie process data
 	iRet = createDir(TEMP_FILE_DIR, S_IRWXU);
 
@@ -49,11 +49,11 @@ int main(int argc, char **argv)
 		goto cleanup;
 
     //init file watcher
-    fWatcherArg.iWatcher = initWatcher();
-    fWatcherArg.zombie_queue = createQueue(DEFAULT_QUEUE_SIZE);
+    zombieArg.iWatcher = initWatcher();
+    zombieArg.zombie_queue = createQueue(DEFAULT_QUEUE_SIZE);
 
     //init mutex
-    if (pthread_mutex_init(&fWatcherArg.mutex, NULL) != 0)
+    if (pthread_mutex_init(&zombieArg.mutex, NULL) != 0)
     {
         logIt(ERROR, "could not init mutex!");
         iRet = -2;
@@ -61,13 +61,14 @@ int main(int argc, char **argv)
     }
 
     //add watcher to directory
-    addDirectory(fWatcherArg.iWatcher, TEMP_FILE_DIR);
+    addDirectory(zombieArg.iWatcher, TEMP_FILE_DIR);
 
     //thread for file watcher
-    pthread_create(&watcherId, NULL, watch, &fWatcherArg);
+    pthread_create(&zombieArg.watcherId, NULL, watch, &zombieArg);
 
     //thread for backoffice communication
-    pthread_create(&commId, NULL, sendProcessData, &fWatcherArg);
+    pthread_create(&zombieArg.commId, NULL, sendProcessData, &zombieArg);
+
 
     while(1)
     {
@@ -89,19 +90,39 @@ int main(int argc, char **argv)
 
     //end procedures
 	cleanup:
-		pthread_cancel(watcherId);
-		pthread_cancel(commId);
-		pthread_mutex_destroy(&fWatcherArg.mutex);
+		iRet = cleanup(zombieArg);
 
-		freeQueue(fWatcherArg.zombie_queue);
+	return iRet;
+}
 
-		if(removeFile(STOP_FLAG_FILE) != 0)
-		{
-			destroyLogging();
-			return -1;
-		}
+/**
+ * Handles different UNIX Signals
+ *
+ * @param iSignal ... signal code
+ * @author chifac08
+ */
+void signalHandler(unsigned int iSignal)
+{
+	int iRet=0;
 
-		destroyLogging();
+	switch(iSignal)
+	{
+		case SIGINT:
+			if(createStopFlag() < 0)
+			{
+				iRet=cleanup(zombieArg);
+				exit(iRet);
+			}
+			break;
+	}
+}
 
-	return 0;
+/**
+ * Installs various signal handler
+ *
+ * @author chifac08
+ */
+void installSignalHandler()
+{
+	signal(SIGINT, signalHandler);
 }

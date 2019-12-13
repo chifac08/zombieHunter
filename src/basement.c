@@ -163,6 +163,13 @@ int removeFile(const char* cpFileName)
 	int iStatus = 0;
 	char szLogMessage[1024] = {0};
 
+	if(access(cpFileName, F_OK) < 0)
+	{
+		formatLog(szLogMessage, sizeof(szLogMessage), "File %s does not exist!", cpFileName);
+		logIt(INFO, szLogMessage);
+		return 0;
+	}
+
 	iStatus = remove(cpFileName);
 
 	if(iStatus != 0)
@@ -197,7 +204,7 @@ void loadAllFilesFromDir()
  */
 void sendProcessData(void* arg)
 {
-	FILE_WATCHER_ARG* fWatcherArg = (FILE_WATCHER_ARG*)arg;
+	ZOMBIE_ARG* zombieArg = (ZOMBIE_ARG*)arg;
 	char szLogMessage[1024] = {0};
 	FILE* fZombieFile = NULL;
 	char* cpReturn = NULL;
@@ -209,14 +216,14 @@ void sendProcessData(void* arg)
 
 	while(1)
 	{
-		if(fWatcherArg->zombie_queue->size < 1)
+		if(zombieArg->zombie_queue->size < 1)
 		{
 			//TODO switch for time
 			sleep(30);
 			continue;
 		}
 
-		iRc = pthread_mutex_trylock(&fWatcherArg->mutex);
+		iRc = pthread_mutex_trylock(&zombieArg->mutex);
 
 		if(iRc == EBUSY)
 		{
@@ -224,10 +231,10 @@ void sendProcessData(void* arg)
 			continue;
 		}
 
-		copyQueue(fWatcherArg->zombie_queue, &zombieQueueSnap);
-		clearQueue(fWatcherArg->zombie_queue);
+		copyQueue(zombieArg->zombie_queue, &zombieQueueSnap);
+		clearQueue(zombieArg->zombie_queue);
 
-		pthread_mutex_unlock(&fWatcherArg->mutex);
+		pthread_mutex_unlock(&zombieArg->mutex);
 
 		while(zombieQueueSnap->size > 0)
 		{
@@ -239,7 +246,7 @@ void sendProcessData(void* arg)
 			if(!cpReturn)
 			{
 				logIt(ERROR, "No path for file!");
-	//			pthread_mutex_unlock(&fWatcherArg->mutex);
+	//			pthread_mutex_unlock(&zombieArg->mutex);
 				sleep(5);
 				continue;
 			}
@@ -289,4 +296,60 @@ void sendProcessData(void* arg)
 
 		sleep(30);
 	}
+}
+
+/**
+ * Cleanup Resources
+ *
+ * @param zombieArg ... File Watcher Params
+ * @author chifac08
+ */
+int cleanup(ZOMBIE_ARG zombieArg)
+{
+	int iRet = 0;
+
+	pthread_cancel(zombieArg.watcherId);
+	pthread_cancel(zombieArg.commId);
+	pthread_mutex_destroy(&zombieArg.mutex);
+
+	freeQueue(zombieArg.zombie_queue);
+
+	if(removeFile(STOP_FLAG_FILE) != 0)
+	{
+		iRet=-3;
+	}
+
+	destroyLogging();
+
+	return iRet;
+}
+
+/**
+ * Creates the stop flag file
+ *
+ * @author chifac08
+ * @return 0 .. OK
+ *        -1 .. Could not create file
+ */
+int createStopFlag()
+{
+	FILE* fStopFlag = NULL;
+	int iRet = 0;
+	char szLogMessage[1024] = {0};
+
+	fStopFlag = fopen(STOP_FLAG_FILE, "wb");
+
+	if(!fStopFlag)
+	{
+		formatLog(szLogMessage, sizeof(szLogMessage), "Could not create stop flag: %s!", STOP_FLAG_FILE);
+		logIt(ERROR, szLogMessage);
+		return -1;
+	}
+
+	formatLog(szLogMessage, sizeof(szLogMessage), "Created stop flag: %s", STOP_FLAG_FILE);
+	logIt(INFO, szLogMessage);
+
+	fclose(fStopFlag);
+
+	return 0;
 }
